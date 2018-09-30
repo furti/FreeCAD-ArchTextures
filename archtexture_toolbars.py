@@ -11,3 +11,4 @@ class ArchTextureToolbarManager:
 toolbarManager = ArchTextureToolbarManager()
 
 # import commands here
+import create_config
