@@ -12,10 +12,11 @@ class ArchTextureWorkbench (FreeCADGui.Workbench):
         
 
     def Initialize(self):
+        pass
         # Initialize the module
-        import toolbars
+        import archtexture_toolbars
 
-        for name,commands in toolbars.toolbarManager.Toolbars.items():
+        for name,commands in archtexture_toolbars.toolbarManager.Toolbars.items():
             self.appendToolbar(name,[command.commandName for command in commands])
 
 #    def Activated(self):
