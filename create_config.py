@@ -1,8 +1,8 @@
 import FreeCAD, FreeCADGui
 
 import texture_config
-from utils.resource_utils import iconPath
-import utils.qtutils as qtutils
+from arch_texture_utils.resource_utils import iconPath
+import arch_texture_utils.qtutils as qtutils
 
 class CreateTextureConfigCommand:
     toolbarName = 'ArchTexture_Tools'
