@@ -15,6 +15,7 @@ QTableWidgetItem = QtWidgets.QTableWidgetItem
 
 # File patterns
 IMAGE_FILES = "Image Files (*.png *.jpg *.bmp)"
+JSON_FILES = "JSON Files (*.json)"
 
 # methods
 def activeWindow():
@@ -23,8 +24,11 @@ def activeWindow():
 def showInfo(title, message):
     QtWidgets.QMessageBox.information(activeWindow(), title, message)
 
-def userSelectedFile(title, filePattern):
-    fileName = QtWidgets.QFileDialog.getOpenFileName(activeWindow(), title, '', filePattern)[0]
+def userSelectedFile(title, filePattern, mustExist=True):
+    if mustExist:
+        fileName = QtWidgets.QFileDialog.getOpenFileName(activeWindow(), title, '', filePattern)[0]
+    else:
+        fileName = QtWidgets.QFileDialog.getSaveFileName(activeWindow(), caption=title, filter=filePattern)[0]
 
     if fileName == '':
         return None

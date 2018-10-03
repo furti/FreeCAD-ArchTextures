@@ -112,13 +112,15 @@ class TextureConfigPanel():
         FreeCADGui.Control.closeDialog()
 
 class TextureConfig():
-    def __init__(self, obj):
+    def __init__(self, obj, fileObject=None):
         obj.Proxy = self
         
-        self.textureManager = TextureManager()
+        self.textureManager = TextureManager(fileObject)
         self.showTextures = True
 
         self.execute(obj)
+
+        self.isTextureConfig = True
     
     def execute(self, fp):
         if self.showTextures:
@@ -126,6 +128,9 @@ class TextureConfig():
         else:
             self.textureManager.removeTextures()
     
+    def export(self, fileObject):
+        self.textureManager.export(fileObject)
+
     def __getstate__(self):
         '''Store the texture config inside the FreeCAD File'''
         return (self.textureManager.textureData,)
@@ -135,6 +140,8 @@ class TextureConfig():
 
         self.textureManager = TextureManager()
         self.textureManager.textureData = state[0]
+
+        self.isTextureConfig = True
 
         return None
 
@@ -188,10 +195,14 @@ class ViewProviderTextureConfig():
     def __setstate__(self,state):
         return None
 
-def createTextureConfig():
+def createTextureConfig(fileObject=None):
     textureConfigObject = FreeCAD.ActiveDocument.addObject("App::FeaturePython", "TextureConfig")
-    textureConfig = TextureConfig(textureConfigObject)
+    textureConfig = TextureConfig(textureConfigObject, fileObject)
     ViewProviderTextureConfig(textureConfigObject.ViewObject)
 
 if __name__ == "__main__":
-    createTextureConfig()
+    from os import path
+    
+    texture_path = path.join(path.dirname(path.realpath(__file__)), 'textures', 'Test.json')
+    
+    createTextureConfig(open(texture_path, 'r'))

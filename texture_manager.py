@@ -1,16 +1,23 @@
 import FreeCAD
 import math
+import json
 from pivy import coin
 
 class TextureManager():
-    def __init__(self):
-        self.textureData = {
-            'materials': {
-            #     '<mat_name>': {
-            #         'file': 'path_to_texture'
-            #     }
+    def __init__(self, fileObject=None):
+        if fileObject is None:
+            self.textureData = {
+                'materials': {
+                #     '<mat_name>': {
+                #         'file': 'path_to_texture'
+                #     }
+                }
             }
-        }
+        else:
+            try:
+                self.textureData = json.load(fileObject, encoding='utf-8')
+            finally:
+                fileObject.close()
 
         self.textureCache = {
             # '<file_name>': texture
@@ -19,7 +26,13 @@ class TextureManager():
         self.texturedObjects = [
             #(object, (texture, transform), (originalTransparency, originalShapeColor))
         ]
-    
+
+    def export(self, fileObject):
+        try:
+            json.dump(self.textureData, fileObject, sort_keys=True, indent=4, ensure_ascii=False)
+        finally:
+            fileObject.close()
+
     def textureObjects(self):
         FreeCAD.Console.PrintMessage('Texturing objects\n')
 
