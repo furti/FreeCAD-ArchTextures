@@ -31,9 +31,12 @@ class TextureConfigTable():
         self.qtTable.setItem(rowPosition, 1, fileEdit)
     
     def removeRow(self):
-        # self.qTable.removeRow(row)
-        #https://stackoverflow.com/questions/5927499/how-to-get-selected-rows-in-qtableview
-        pass
+        selectionModel = self.qtTable.selectionModel()
+
+        if selectionModel.hasSelection():
+            for selection in selectionModel.selectedRows():
+                FreeCAD.Console.PrintMessage(selection.row())
+                self.qtTable.removeRow(selection.row())
     
     def saveIntoConfig(self):
         self.config.clear()
