@@ -3,7 +3,7 @@ import re
 from pivy import coin
 from texture_manager import TextureManager
 from arch_texture_utils.resource_utils import uiPath
-from arch_texture_utils.qtutils import QComboBox, QTableWidgetItem, userSelectedFile, IMAGE_FILES
+from arch_texture_utils.qtutils import QComboBox, QTableWidgetItem, QDoubleSpinBox, userSelectedFile, IMAGE_FILES, showInfo
 
 MAT_NAME_REGEX = re.compile(r'.* \((.*)\)')
 
@@ -18,17 +18,20 @@ class TextureConfigTable():
     
     def setupTable(self):
         for name, entryConfig in self.config.items():
-            self.addRow(name, entryConfig['file'])
+            self.addRow(name, entryConfig['file'], entryConfig['realSize'])
 
-    def addRow(self, name=None, textureFile=None):
+    def addRow(self, name=None, textureFile=None, realSize=None):
         rowPosition = self.qtTable.rowCount()
         self.qtTable.insertRow(rowPosition)
 
         comboBox = self.materialBox(name)
         fileEdit = self.fileInput(textureFile)
+        lengthEdit, heightEdit = self.sizeEdit(realSize)
 
         self.qtTable.setCellWidget(rowPosition, 0, comboBox)
         self.qtTable.setItem(rowPosition, 1, fileEdit)
+        self.qtTable.setCellWidget(rowPosition, 2, lengthEdit)
+        self.qtTable.setCellWidget(rowPosition, 3, heightEdit)
     
     def removeRow(self):
         selectionModel = self.qtTable.selectionModel()
@@ -44,11 +47,17 @@ class TextureConfigTable():
         for row in range(self.qtTable.rowCount()):
             comboBox = self.qtTable.cellWidget(row, 0)
             fileBox = self.qtTable.item(row, 1)
+            lengthEdit = self.qtTable.cellWidget(row, 2)
+            heightEdit = self.qtTable.cellWidget(row, 3)
 
             materialName = MAT_NAME_REGEX.findall(comboBox.currentText())[0]
 
             self.config[materialName] = {
-                'file': fileBox.text()
+                'file': fileBox.text(),
+                'realSize': {
+                    'length': lengthEdit.value(),
+                    'height': heightEdit.value()
+                }
             }
     
     def materialBox(self, materialName=None):
@@ -75,6 +84,27 @@ class TextureConfigTable():
         fileInput = QTableWidgetItem(file)
 
         return fileInput
+    
+    def sizeEdit(self, realSize=None):
+        lengthEdit = QDoubleSpinBox()
+        heightEdit = QDoubleSpinBox()
+
+        lengthEdit.setSuffix('mm')
+        heightEdit.setSuffix('mm')
+
+        lengthEdit.setMinimum(0)
+        heightEdit.setMinimum(0)
+
+        lengthEdit.setMaximum(100000)
+        heightEdit.setMaximum(100000)
+
+        if realSize is not None:
+            lengthEdit.setValue(realSize['length'])
+        
+        if realSize is not None:
+            heightEdit.setValue(realSize['height'])
+
+        return (lengthEdit, heightEdit)
     
     def doubleClicked(self, item):
         selectedFile = userSelectedFile('Select texture', IMAGE_FILES)
@@ -202,7 +232,10 @@ def createTextureConfig(fileObject=None):
 
 if __name__ == "__main__":
     from os import path
-    
-    texture_path = path.join(path.dirname(path.realpath(__file__)), 'textures', 'Test.json')
-    
-    createTextureConfig(open(texture_path, 'r'))
+
+    if FreeCAD.ActiveDocument is None:
+        showInfo('No Document', 'Create a document to continue.')
+    else:
+        configFile = path.join(path.dirname(path.realpath(__file__)), 'textures',FreeCAD.ActiveDocument.Name + '.json')
+        
+        createTextureConfig(open(configFile, 'r'))

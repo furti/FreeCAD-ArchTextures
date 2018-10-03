@@ -12,6 +12,7 @@ import time
 # common used classes
 QComboBox = QtWidgets.QComboBox
 QTableWidgetItem = QtWidgets.QTableWidgetItem
+QDoubleSpinBox = QtWidgets.QDoubleSpinBox
 
 # File patterns
 IMAGE_FILES = "Image Files (*.png *.jpg *.bmp)"
