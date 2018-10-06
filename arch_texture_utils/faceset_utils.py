@@ -60,8 +60,6 @@ class Face():
             if realT > 0:
                 tScale = self.height / realT
 
-        print('%s, %s' % (sScale, tScale))
-
         return [sScale, tScale]
     
     def appendCoordinate(self, textureCoords, vertex, s, t):
@@ -170,6 +168,12 @@ def buildFaceSet(brep, vertexCoordinates):
 
 
 if __name__ == "__main__":
+    def printValues(l):
+        values = []
+
+        for e, index in enumerate(l):
+            print('%s: %s' % (index, e.getValue()))
+    
     rootNode = FreeCAD.ActiveDocument.Wall.ViewObject.RootNode
     switch = findSwitch(rootNode)
     brep = findBrepFaceset(switch)
@@ -177,5 +181,6 @@ if __name__ == "__main__":
     
     faceSet = buildFaceSet(brep, vertexCoordinates)
     faceSet.print()
+    textureCoords = faceSet.calculateTextureCoordinates({'s': 1680, 't': 1440})
 
-    print(faceSet.calculateTextureCoordinates({'s': 1680, 't': 1440}))
+    printValues(textureCoords.point.getValues())
