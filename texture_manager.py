@@ -65,7 +65,7 @@ class TextureManager():
 
                         faceSet.print()
 
-                        brep.textureCoordIndex.setValues(0, 48, brep.coordIndex.getValues())
+                        self.setupTextureCoordinateIndex(brep)
 
                         rootnode.insertChild(texture, 1)
                         rootnode.insertChild(textureCoords, 1)
@@ -82,6 +82,11 @@ class TextureManager():
             o.ViewObject.ShapeColor = originalViewData[1]
 
         self.texturedObjects = []
+    
+    def setupTextureCoordinateIndex(self, brep):
+        coordinateIndex = brep.coordIndex.getValues()
+
+        brep.textureCoordIndex.setValues(0, len(coordinateIndex), coordinateIndex)
     
     def getTextureForMaterial(self, material):
         materialName = material.Name
