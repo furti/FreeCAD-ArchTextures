@@ -60,7 +60,7 @@ class TextureManager():
                         faceSet = faceset_utils.buildFaceSet(brep, vertexCoordinates)
                         textureCoords = faceSet.calculateTextureCoordinates(textureConfig['realSize'])
 
-                        faceSet.print()
+                        faceSet.printData()
 
                         self.setupTextureCoordinateIndex(brep)
 

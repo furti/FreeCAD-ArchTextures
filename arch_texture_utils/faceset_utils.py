@@ -83,7 +83,7 @@ class Face():
         self.length = bottomLeftVect.distanceToPoint(bottomRightVect)
         self.height = bottomLeftVect.distanceToPoint(topLeftVect)
     
-    def print(self):
+    def printData(self):
         for vertex in self.vertices:
             print('    %s' % (vertex, ))
 
@@ -110,10 +110,10 @@ class FaceSet():
 
         return textureCoords
     
-    def print(self):
+    def printData(self):
         for face in self.faces:
             print('Face:')
-            face.print()
+            face.printData()
     
 def findVertexCoordinates(node):
      for child in node.getChildren():
@@ -171,7 +171,7 @@ if __name__ == "__main__":
     def printValues(l):
         values = []
 
-        for e, index in enumerate(l):
+        for index, e in enumerate(l):
             print('%s: %s' % (index, e.getValue()))
     
     rootNode = FreeCAD.ActiveDocument.Wall.ViewObject.RootNode
@@ -180,7 +180,7 @@ if __name__ == "__main__":
     vertexCoordinates = findVertexCoordinates(rootNode)
     
     faceSet = buildFaceSet(brep, vertexCoordinates)
-    faceSet.print()
+    faceSet.printData()
     textureCoords = faceSet.calculateTextureCoordinates({'s': 1680, 't': 1440})
 
     printValues(textureCoords.point.getValues())
