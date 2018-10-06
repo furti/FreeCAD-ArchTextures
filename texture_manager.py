@@ -29,7 +29,7 @@ class TextureManager():
         }
 
         self.texturedObjects = [
-            #(object, (texture, transform), (originalTransparency, originalShapeColor))
+            #(object, (texture, transform))
         ]
 
     def export(self, fileObject):
@@ -53,9 +53,6 @@ class TextureManager():
                         originalTransparency = o.ViewObject.Transparency
                         originalShapeColor = o.ViewObject.ShapeColor
 
-                        o.ViewObject.Transparency = 0
-                        o.ViewObject.ShapeColor = (1.0, 1.0, 1.0)
-
                         rootnode = o.ViewObject.RootNode
                         switch = faceset_utils.findSwitch(rootnode)
                         brep = faceset_utils.findBrepFaceset(switch)
@@ -70,16 +67,14 @@ class TextureManager():
                         rootnode.insertChild(texture, 1)
                         rootnode.insertChild(textureCoords, 1)
 
-                        self.texturedObjects.append((o, (texture, textureCoords), (originalTransparency, originalShapeColor)))
+                        self.texturedObjects.append((o, (texture, textureCoords)))
     
     def removeTextures(self):
         FreeCAD.Console.PrintMessage('Removing Textures\n')
 
-        for o, coinData, originalViewData in self.texturedObjects:
+        for o, coinData in self.texturedObjects:
             o.ViewObject.RootNode.removeChild(coinData[0])
             o.ViewObject.RootNode.removeChild(coinData[1])
-            o.ViewObject.Transparency = originalViewData[0]
-            o.ViewObject.ShapeColor = originalViewData[1]
 
         self.texturedObjects = []
     
@@ -101,7 +96,7 @@ class TextureManager():
                 tex.filename = imageFile
                 # Maybe we can use this instead of setting the color of the shape to black?
                 # Will result in white borders instead of black ones. Like the black ones more.
-                # tex.model = coin.SoMultiTextureImageElement.REPLACE
+                tex.model = coin.SoMultiTextureImageElement.REPLACE
 
                 self.textureCache[imageFile] = tex
             
