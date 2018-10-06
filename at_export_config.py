@@ -10,8 +10,8 @@ class ExportTextureConfigCommand:
 
     def GetResources(self):
         return {'MenuText': "Export Texture Config",
-                'ToolTip' : "Exports the configuration stored inside a TextureConfig object to a file"
-                #'Pixmap': iconPath('ImportImage.svg')
+                'ToolTip' : "Exports the configuration stored inside a TextureConfig object to a file",
+                'Pixmap': iconPath('ExportConfig.svg')
                 }
 
     def Activated(self):

@@ -10,8 +10,8 @@ class ImportTextureConfigCommand:
 
     def GetResources(self):
         return {'MenuText': "Import Texture Config",
-                'ToolTip' : "Import a new TextureConfig object from a JSOn File"
-                #'Pixmap': iconPath('ImportImage.svg')
+                'ToolTip' : "Import a new TextureConfig object from a JSOn File",
+                'Pixmap': iconPath('ImportConfig.svg')
                 }
 
     def Activated(self):

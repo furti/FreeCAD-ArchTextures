@@ -7,8 +7,8 @@ class ArchTextureWorkbench (FreeCADGui.Workbench):
     ToolTip = "Texture architectural objects"
 
     def __init__(self):
-        from utils.resource_utils import iconPath
-        # self.__class__.Icon = iconPath("Workbench.svg")
+        from arch_texture_utils.resource_utils import iconPath
+        self.__class__.Icon = iconPath("Workbench.svg")
         
 
     def Initialize(self):

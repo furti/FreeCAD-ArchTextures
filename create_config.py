@@ -10,8 +10,8 @@ class CreateTextureConfigCommand:
 
     def GetResources(self):
         return {'MenuText': "Create Texture Config",
-                'ToolTip' : "Create a new TextureConfig object to store Textures"
-                #'Pixmap': iconPath('ImportImage.svg')
+                'ToolTip' : "Create a new TextureConfig object to store Textures",
+                'Pixmap': iconPath('CreateConfig.svg')
                 }
 
     def Activated(self):
