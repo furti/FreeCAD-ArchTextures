@@ -1,7 +1,8 @@
 import FreeCAD
-import math
+# import math
 import json
 from pivy import coin
+import arch_texture_utils.faceset_utils as faceset_utils
 
 class TextureManager():
     def __init__(self, fileObject=None):
@@ -11,8 +12,8 @@ class TextureManager():
                 #     '<mat_name>': {
                 #         'file': 'path_to_texture',
                 #         'realSize': None | {
-                #              'length': <length_in_mm>,
-                #              'height': <height_in_mm>
+                #              's': <length_in_mm>,
+                #              't': <height_in_mm>
                 #          }
                 #     }
                 }
@@ -55,13 +56,21 @@ class TextureManager():
                         o.ViewObject.Transparency = 0
                         o.ViewObject.ShapeColor = (1.0, 1.0, 1.0)
 
-                        texTransform = self.getTextureTransform(o, textureConfig)
-                        
                         rootnode = o.ViewObject.RootNode
-                        rootnode.insertChild(texture, 1)
-                        rootnode.insertChild(texTransform, 1)
+                        switch = faceset_utils.findSwitch(rootnode)
+                        brep = faceset_utils.findBrepFaceset(switch)
+                        vertexCoordinates = faceset_utils.findVertexCoordinates(rootnode)
+                        faceSet = faceset_utils.buildFaceSet(brep, vertexCoordinates)
+                        textureCoords = faceSet.calculateTextureCoordinates(textureConfig['realSize'])
 
-                        self.texturedObjects.append((o, (texture, texTransform), (originalTransparency, originalShapeColor)))
+                        faceSet.print()
+
+                        brep.textureCoordIndex.setValues(0, 48, brep.coordIndex.getValues())
+
+                        rootnode.insertChild(texture, 1)
+                        rootnode.insertChild(textureCoords, 1)
+
+                        self.texturedObjects.append((o, (texture, textureCoords), (originalTransparency, originalShapeColor)))
     
     def removeTextures(self):
         FreeCAD.Console.PrintMessage('Removing Textures\n')
@@ -93,44 +102,8 @@ class TextureManager():
             
             return (self.textureCache[imageFile], materialConfig)
 
-        return None
+        return (None, None)
     
-    def getTextureTransform(self, o, materialConfig):
-        textureTransform = coin.SoTexture2Transform()
-        textureTransform.rotation = math.radians(90)
-
-        if materialConfig['realSize'] is not None:
-            textureTransform.scaleFactor = self.calculateScale(o, materialConfig['realSize'])
-
-        return textureTransform
-    
-    def calculateScale(self, o, sizeConfig):
-        yScale = 1
-        xScale = 1
-
-        xValue = None
-        yValue = None
-
-        if hasattr(o, 'Length'):
-            xValue = o.Length.Value
-        
-        if hasattr(o, 'Height'):
-            yValue = o.Height.Value
-        
-        realLength = sizeConfig['length']
-
-        if xValue is not None and realLength > 0:
-            xScale = xValue / realLength
-        
-        realHeight = sizeConfig['height']
-
-        if yValue is not None and realHeight > 0:
-            yScale = yValue / realHeight
-
-        print('%s, %s' % (xScale, yScale))
-
-        return [yScale, xScale]
-
 if __name__ == "__main__":
     from os import path
 

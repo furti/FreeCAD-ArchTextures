@@ -55,8 +55,8 @@ class TextureConfigTable():
             self.config[materialName] = {
                 'file': fileBox.text(),
                 'realSize': {
-                    'length': lengthEdit.value(),
-                    'height': heightEdit.value()
+                    's': lengthEdit.value(),
+                    't': heightEdit.value()
                 }
             }
     
@@ -99,10 +99,10 @@ class TextureConfigTable():
         heightEdit.setMaximum(100000)
 
         if realSize is not None:
-            lengthEdit.setValue(realSize['length'])
+            lengthEdit.setValue(realSize['s'])
         
         if realSize is not None:
-            heightEdit.setValue(realSize['height'])
+            heightEdit.setValue(realSize['t'])
 
         return (lengthEdit, heightEdit)
     
