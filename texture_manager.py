@@ -50,6 +50,8 @@ class TextureManager():
                     texture, textureConfig = self.getTextureForMaterial(o.Material)
 
                     if texture is not None:
+                        print('Texturing %s' % (o.Label,))
+
                         originalTransparency = o.ViewObject.Transparency
                         originalShapeColor = o.ViewObject.ShapeColor
 
@@ -60,7 +62,7 @@ class TextureManager():
                         faceSet = faceset_utils.buildFaceSet(brep, vertexCoordinates)
                         textureCoords = faceSet.calculateTextureCoordinates(textureConfig['realSize'])
 
-                        faceSet.printData()
+                        # faceSet.printData()
 
                         self.setupTextureCoordinateIndex(brep)
 
