@@ -40,10 +40,17 @@ class Face():
     def appendTextureCoordinates(self, textureCoords, realSize):
         scaleFactor = self.calculateScaleFactor(realSize)
 
-        self.appendCoordinate(textureCoords, self.vertices[0], 0, 0)
-        self.appendCoordinate(textureCoords, self.vertices[1], scaleFactor[0], 0)
-        self.appendCoordinate(textureCoords, self.vertices[2], 0, scaleFactor[1])
-        self.appendCoordinate(textureCoords, self.vertices[3], scaleFactor[0], scaleFactor[1])
+        # Only 4 sided faces supported right now. Simply set other faces to 0, 0
+        if len(self.vertices) != 4:
+            print('  ignoring face (%s)' % (len(self.vertices), ))
+            for vertex in self.vertices:
+                self.appendCoordinate(textureCoords, vertex, 0, 0)
+        else:
+            print ('  texturing face')
+            self.appendCoordinate(textureCoords, self.vertices[0], 0, 0)
+            self.appendCoordinate(textureCoords, self.vertices[1], scaleFactor[0], 0)
+            self.appendCoordinate(textureCoords, self.vertices[2], 0, scaleFactor[1])
+            self.appendCoordinate(textureCoords, self.vertices[3], scaleFactor[0], scaleFactor[1])
     
     def calculateScaleFactor(self, realSize):
         tScale = 1
@@ -70,6 +77,10 @@ class Face():
         we end up with a order of [bottom left, bottom right, top left, top right'''
 
         self.vertices.sort(key=cmp_to_key(compareVectors))
+
+        # only 4 sided faces are supported right now
+        if len(self.vertices) != 4:
+            return
 
         bottomLeft = self.vertices[0]['vector']
         bottomRight = self.vertices[1]['vector']
