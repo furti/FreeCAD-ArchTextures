@@ -15,7 +15,7 @@ QTableWidgetItem = QtWidgets.QTableWidgetItem
 QDoubleSpinBox = QtWidgets.QDoubleSpinBox
 
 # File patterns
-IMAGE_FILES = "Image Files (*.png *.jpg *.bmp)"
+IMAGE_FILES = "Image Files (*.png *.jpg *.bmp, *.tif)"
 JSON_FILES = "JSON Files (*.json)"
 
 # methods
