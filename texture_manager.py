@@ -45,31 +45,30 @@ class TextureManager():
         FreeCAD.Console.PrintMessage('Texturing objects\n')
 
         for o in FreeCAD.ActiveDocument.Objects:
-            if hasattr(o,'Shape'):
-                if hasattr(o, 'Material') and o.Material is not None:
-                    texture, textureConfig = self.getTextureForMaterial(o.Material)
+            if self.isTexturable(o):
+                texture, textureConfig = self.getTextureForMaterial(o.Material)
 
-                    if texture is not None:
-                        print('Texturing %s' % (o.Label,))
+                if texture is not None:
+                    print('Texturing %s' % (o.Label,))
 
-                        originalTransparency = o.ViewObject.Transparency
-                        originalShapeColor = o.ViewObject.ShapeColor
+                    originalTransparency = o.ViewObject.Transparency
+                    originalShapeColor = o.ViewObject.ShapeColor
 
-                        rootnode = o.ViewObject.RootNode
-                        switch = faceset_utils.findSwitch(rootnode)
-                        brep = faceset_utils.findBrepFaceset(switch)
-                        vertexCoordinates = faceset_utils.findVertexCoordinates(rootnode)
-                        faceSet = faceset_utils.buildFaceSet(brep, vertexCoordinates)
-                        textureCoords = faceSet.calculateTextureCoordinates(textureConfig['realSize'])
+                    rootnode = o.ViewObject.RootNode
+                    switch = faceset_utils.findSwitch(rootnode)
+                    brep = faceset_utils.findBrepFaceset(switch)
+                    vertexCoordinates = faceset_utils.findVertexCoordinates(rootnode)
+                    faceSet = faceset_utils.buildFaceSet(brep, vertexCoordinates)
+                    textureCoords = faceSet.calculateTextureCoordinates(textureConfig['realSize'])
 
-                        # faceSet.printData()
+                    # faceSet.printData()
 
-                        self.setupTextureCoordinateIndex(brep)
+                    self.setupTextureCoordinateIndex(brep)
 
-                        rootnode.insertChild(texture, 1)
-                        rootnode.insertChild(textureCoords, 1)
+                    rootnode.insertChild(texture, 1)
+                    rootnode.insertChild(textureCoords, 1)
 
-                        self.texturedObjects.append((o, (texture, textureCoords)))
+                    self.texturedObjects.append((o, (texture, textureCoords)))
     
     def removeTextures(self):
         FreeCAD.Console.PrintMessage('Removing Textures\n')
@@ -80,6 +79,9 @@ class TextureManager():
 
         self.texturedObjects = []
     
+    def isTexturable(self, o):
+        return hasattr(o,'Shape') and hasattr(o, 'Material') and o.Material is not None and o.ViewObject.Visibility
+
     def setupTextureCoordinateIndex(self, brep):
         coordinateIndex = brep.coordIndex.getValues()
 
