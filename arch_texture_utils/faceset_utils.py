@@ -1,4 +1,4 @@
-import FreeCAD
+import FreeCAD, Part
 import math
 from functools import cmp_to_key
 from pivy import coin
@@ -42,11 +42,12 @@ class Face():
 
         # Only 4 sided faces supported right now. Simply set other faces to 0, 0
         if len(self.vertices) != 4:
-            print('  ignoring face (%s)' % (len(self.vertices), ))
+            print('  ignoring face')
+            self.printData()
+
             for vertex in self.vertices:
                 self.appendCoordinate(textureCoords, vertex, 0, 0)
         else:
-            print ('  texturing face')
             self.appendCoordinate(textureCoords, self.vertices[0], 0, 0)
             self.appendCoordinate(textureCoords, self.vertices[1], scaleFactor[0], 0)
             self.appendCoordinate(textureCoords, self.vertices[2], 0, scaleFactor[1])
@@ -78,25 +79,59 @@ class Face():
 
         self.vertices.sort(key=cmp_to_key(compareVectors))
 
-        # only 4 sided faces are supported right now
-        if len(self.vertices) != 4:
-            return
-
-        bottomLeft = self.vertices[0]['vector']
-        bottomRight = self.vertices[1]['vector']
-        topLeft = self.vertices[2]['vector']
-        topRight = self.vertices[3]['vector']
-
-        bottomLeftVect = FreeCAD.Vector(bottomLeft[0], bottomLeft[1], bottomLeft[2])
-        bottomRightVect = FreeCAD.Vector(bottomRight[0], bottomRight[1], bottomRight[2])
-        topLeftVect = FreeCAD.Vector(topLeft[0], topLeft[1], topLeft[2])
-
-        self.length = bottomLeftVect.distanceToPoint(bottomRightVect)
-        self.height = bottomLeftVect.distanceToPoint(topLeftVect)
+        self.length, self.height = self.calculateBoundBox()
     
+    def calculateBoundBox(self):
+        xValues = [v['vector'][0] for v in self.vertices]
+        yValues = [v['vector'][1] for v in self.vertices]
+        zValues = [v['vector'][2] for v in self.vertices]
+
+        xMin = min(xValues)
+        yMin = min(yValues)
+        zMin = min(zValues)
+        xMax = max(xValues)
+        yMax = max(yValues)
+        zMax = max(zValues)
+
+        self.boundingBox = FreeCAD.BoundBox(xMin, yMin, zMin, xMax, yMax, zMax)
+
+        lengths = []
+        heights = []
+
+        # lets iterate over all edges of our bounding box and find the two longest edges
+        for i in range(12):
+            edge = self.boundingBox.getEdge(i)
+
+            # ignore if the edge has no length
+            if not edge[0].isEqual(edge[1], 0.00001):
+                edgeLength = Part.LineSegment(edge[0], edge[1]).length()
+                
+                # same z means is our length
+                if edge[0].z == edge[1].z:
+                    lengths.append(edgeLength)
+                else:
+                    height = heights.append(edgeLength)
+
+        length = max(lengths)
+        
+        # When everything is on the same z plane we have no height. Use the second largest length as height
+        if len(heights) == 0:
+            remainingLengths = [l for l in lengths if l != length]
+
+            if len(remainingLengths) == 0:
+                height = length
+            else:
+                height = max(remainingLengths)
+        else:
+            height = max(heights)
+
+        return (length, height)
+        
     def printData(self):
         for vertex in self.vertices:
             print('    %s' % (vertex, ))
+
+        print('    length: %s, height: %s' % (self.length, self.height))
 
 class FaceSet():
     def __init__(self):
