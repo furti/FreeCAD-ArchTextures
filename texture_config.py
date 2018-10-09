@@ -183,10 +183,12 @@ class ViewProviderTextureConfig():
         self.ViewObject = vobj
         self.Object = vobj.Object
         self.textureConfig = self.Object.Proxy
+
         self.textureConfig.showTextures = vobj.Visibility
 
         self.coinNode = coin.SoGroup()
         vobj.addDisplayMode(self.coinNode, "Standard");
+        vobj.Visibility = False
     
     def onChanged(self, vp, prop):
         if prop == 'Visibility':
@@ -217,7 +219,6 @@ class ViewProviderTextureConfig():
 
     def updateData(self, fp, prop):
         pass
-
     
     def __getstate__(self):
         return None
