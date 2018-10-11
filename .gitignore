@@ -1,6 +1,7 @@
 textures/**
 testfiles/**
 .vscode/**
+Resources/Documentation/*.FCStd?
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
