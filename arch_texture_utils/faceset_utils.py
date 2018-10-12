@@ -4,21 +4,29 @@ from functools import cmp_to_key
 from pivy import coin
 from itertools import groupby
 
-def compareVectors(vertex1, vertex2):
-    vect1 = vertex1['vector']
-    vect2 = vertex2['vector']
+globalX = FreeCAD.Vector(1, 0, 0)
+globalY = FreeCAD.Vector(0, 1, 0)
+globalZ = FreeCAD.Vector(0, 0, 1)
 
-    xDiff = vect1[0] - vect2[0]
-    yDiff = vect1[1] - vect2[1]
-    zDiff = vect1[2] - vect2[2]
+def toFreeCADVector(vector):
+    return FreeCAD.Vector(vector[0], vector[1], vector[2])
 
-    if zDiff != 0:
-        return zDiff
-    
-    if yDiff != 0:
-        return yDiff
-    
-    return xDiff
+def buildTriangle(vertices):
+    v1 = vertices[0]['vector']
+    v2 = vertices[1]['vector']
+    v3 = vertices[2]['vector']
+
+    e1 = Part.LineSegment(v1, v2)
+    e2 = Part.LineSegment(v2, v3)
+    e3 = Part.LineSegment(v3, v1)
+
+    wire = Part.Wire([e1.toShape(), e2.toShape(), e3.toShape()])
+
+    return Part.Face(wire)
+
+def calculateNormal(face):
+    uv = face.Surface.parameter(face.CenterOfMass)
+    return face.normalAt(uv[0], uv[1])
 
 class Face():
     def __init__(self):
@@ -31,7 +39,7 @@ class Face():
 
             self.vertices.append({
                 'index': index,
-                'vector': vect.getValue()
+                'vector': toFreeCADVector(vect.getValue())
             })
 
             self.length = 0
@@ -74,17 +82,25 @@ class Face():
         textureCoords.point.set1Value(vertex['index'], s, t)
 
     def finishFace(self):
-        '''Will sort the list so that the vertices are ordered. For a face made up of four vertices 
-        we end up with a order of [bottom left, bottom right, top left, top right'''
+        # The first three vertices form the first triangle.
+        # We use this information to get the normal and the offset from the origin
+        # of the whole face
 
-        self.vertices.sort(key=cmp_to_key(compareVectors))
+        # Calculations based on http://www.meshola.com/Articles/converting-between-coordinate-systems
+        offsetVector = self.vertices[0]['vector']
+        self.moveToOrigin(offsetVector)
+
+        originTriangle = buildTriangle(self.vertices)
+        matrix = self.calculateRotationMatrix(originTriangle)
+
+        self.rotate(matrix)
 
         self.length, self.height = self.calculateBoundBox()
-    
+
     def calculateBoundBox(self):
-        xValues = [v['vector'][0] for v in self.vertices]
-        yValues = [v['vector'][1] for v in self.vertices]
-        zValues = [v['vector'][2] for v in self.vertices]
+        xValues = [vertex['vector'][0] for vertex in self.vertices]
+        yValues = [vertex['vector'][1] for vertex in self.vertices]
+        zValues = [vertex['vector'][2] for vertex in self.vertices]
 
         xMin = min(xValues)
         yMin = min(yValues)
@@ -93,45 +109,63 @@ class Face():
         yMax = max(yValues)
         zMax = max(zValues)
 
-        self.boundingBox = FreeCAD.BoundBox(xMin, yMin, zMin, xMax, yMax, zMax)
+        boundingBox = FreeCAD.BoundBox(xMin, yMin, zMin, xMax, yMax, zMax)
 
-        lengths = []
-        heights = []
+        return (boundingBox.XLength, boundingBox.ZLength)
 
-        # lets iterate over all edges of our bounding box and find the two longest edges
-        for i in range(12):
-            edge = self.boundingBox.getEdge(i)
+    def calculateRotationMatrix(self, triangle):
+         # The face normal should point toward the front view
+        localY = calculateNormal(triangle)
+        # as the first point is now in the origin, find the second point.
+        # Should not be the diagonal point of the triangle.
+        localX = FreeCAD.Vector(self.findLocalXAxis())
+        # last axis is the cross product of the other two
+        localZ = localY.cross(localX)
 
-            # ignore if the edge has no length
-            if not edge[0].isEqual(edge[1], 0.00001):
-                edgeLength = Part.LineSegment(edge[0], edge[1]).length()
-                
-                # same z means is our length
-                if edge[0].z == edge[1].z:
-                    lengths.append(edgeLength)
-                else:
-                    height = heights.append(edgeLength)
+        # normalize the vectors. Otherwise we will scale our rotated triangle.
+        normalizedX = localX.normalize()
+        normalizedY = localY.normalize()
+        normalizedZ = localZ.normalize()
 
-        length = max(lengths)
+        return FreeCAD.Matrix(normalizedX.dot(globalX), normalizedX.dot(globalY), normalizedX.dot(globalZ), 0,
+                              normalizedY.dot(globalX), normalizedY.dot(globalY), normalizedY.dot(globalZ), 0,
+                              normalizedZ.dot(globalX), normalizedZ.dot(globalY), normalizedZ.dot(globalZ), 0,
+                              0, 0, 0, 1)
+
+
+    def moveToOrigin(self, offsetVector):
+        '''To move the face to the origin we simply subtract the first vertex from every vertex.'''
+        for vertex in self.vertices:
+            v = vertex['vector']
+            vertex['vector'] = v.sub(offsetVector)
+    
+    def rotate(self, matrix):
+        for vertex in self.vertices:
+            v = vertex['vector']
+            vertex['vector'] = matrix.multiply(v)
+    
+    def findLocalXAxis(self):
+        origin = self.vertices[0]['vector']
+        v1 = self.vertices[1]['vector']
+        v2 = self.vertices[2]['vector']
+
+        distanceToV1 = origin.distanceToPoint(v1)
+        distanceToV2 = origin.distanceToPoint(v2)
+
+        if distanceToV1 < distanceToV2:
+            return v1
         
-        # When everything is on the same z plane we have no height. Use the second largest length as height
-        if len(heights) == 0:
-            remainingLengths = [l for l in lengths if l != length]
+        return v2
 
-            if len(remainingLengths) == 0:
-                height = length
-            else:
-                height = max(remainingLengths)
-        else:
-            height = max(heights)
-
-        return (length, height)
-        
     def printData(self):
         for vertex in self.vertices:
             print('    %s' % (vertex, ))
-
+        
         print('    length: %s, height: %s' % (self.length, self.height))
+        print('    scaleFactor: %s' % (self.calculateScaleFactor({
+                "s": 1680,
+                "t": 1440
+            }), ))
 
 class FaceSet():
     def __init__(self):
