@@ -28,6 +28,21 @@ def calculateNormal(face):
     uv = face.Surface.parameter(face.CenterOfMass)
     return face.normalAt(uv[0], uv[1])
 
+def calculateTextureCoordinate(vector, boundingBox, scaleFactor):
+    vertexS = vector.x
+    vertexT = vector.z
+
+    sMax = boundingBox.XMax
+    tMax = boundingBox.ZMax
+
+    s = vertexS / sMax
+    t = vertexT / tMax
+    
+    return (s * scaleFactor[0], t * scaleFactor[1])
+
+def appendCoordinate(textureCoords, index, s, t):
+    textureCoords.point.set1Value(index, s, t)
+
 class Face():
     def __init__(self):
         self.indices = []
@@ -48,18 +63,9 @@ class Face():
     def appendTextureCoordinates(self, textureCoords, realSize):
         scaleFactor = self.calculateScaleFactor(realSize)
 
-        # Only 4 sided faces supported right now. Simply set other faces to 0, 0
-        if len(self.vertices) != 4:
-            print('  ignoring face')
-            self.printData()
-
-            for vertex in self.vertices:
-                self.appendCoordinate(textureCoords, vertex, 0, 0)
-        else:
-            self.appendCoordinate(textureCoords, self.vertices[0], 0, 0)
-            self.appendCoordinate(textureCoords, self.vertices[1], scaleFactor[0], 0)
-            self.appendCoordinate(textureCoords, self.vertices[2], 0, scaleFactor[1])
-            self.appendCoordinate(textureCoords, self.vertices[3], scaleFactor[0], scaleFactor[1])
+        for vertex in self.vertices:
+            s, t = calculateTextureCoordinate(vertex['vector'], self.boundingBox, scaleFactor)
+            appendCoordinate(textureCoords, vertex['index'], s, t)
     
     def calculateScaleFactor(self, realSize):
         tScale = 1
@@ -78,9 +84,6 @@ class Face():
 
         return [sScale, tScale]
     
-    def appendCoordinate(self, textureCoords, vertex, s, t):
-        textureCoords.point.set1Value(vertex['index'], s, t)
-
     def finishFace(self):
         # The first three vertices form the first triangle.
         # We use this information to get the normal and the offset from the origin
@@ -94,8 +97,11 @@ class Face():
         matrix = self.calculateRotationMatrix(originTriangle)
 
         self.rotate(matrix)
+        self.moveToPositiveAxis()
 
-        self.length, self.height = self.calculateBoundBox()
+        self.boundingBox = self.calculateBoundBox()
+        self.length = self.boundingBox.XLength
+        self.height = self.boundingBox.ZLength
 
     def calculateBoundBox(self):
         xValues = [vertex['vector'][0] for vertex in self.vertices]
@@ -109,9 +115,32 @@ class Face():
         yMax = max(yValues)
         zMax = max(zValues)
 
-        boundingBox = FreeCAD.BoundBox(xMin, yMin, zMin, xMax, yMax, zMax)
+        return FreeCAD.BoundBox(xMin, yMin, zMin, xMax, yMax, zMax)
 
-        return (boundingBox.XLength, boundingBox.ZLength)
+    def moveToPositiveAxis(self):
+        '''Move the face to the positive x and z values'''
+        
+        boundingBox = self.calculateBoundBox()
+
+        xMin = boundingBox.XMin
+        zMin = boundingBox.ZMin
+
+        transformVector = FreeCAD.Vector()
+
+        if xMin < 0:
+            transformVector.x = xMin * -1
+        
+        if zMin < 0:
+            transformVector.z = zMin * -1
+
+        if transformVector.Length == 0:
+            # No transformations needed
+            return
+        
+        for vertex in self.vertices:
+            v = vertex['vector']
+            vertex['vector'] = v.add(transformVector)
+
 
     def calculateRotationMatrix(self, triangle):
          # The face normal should point toward the front view
