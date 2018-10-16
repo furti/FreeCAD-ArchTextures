@@ -58,6 +58,10 @@ But wait! This does not really look like a brick wall at all. The texture is str
 The texture mapping works pretty OK right now. But when we look at the wooden planks or the roof we see that they are not mapped perfectly. There is already a issue (https://github.com/furti/FreeCAD-ArchTextures/issues/10) for this.
 </details>
 
+## Troubleshooting
+
+When something happens and you end up with broken textures or a broken 3D View (e.g. you deleted the TextureConfig before hiding it) you can always close the document and reopen it. The TextureConfig is hidden by default and no textures will be shown after a reload.
+
 ## Technical details
 <details>
     <summary>
