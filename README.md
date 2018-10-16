@@ -19,7 +19,43 @@ and should finnaly end up here
 ![Textured](./Resources/Documentation/textured.png)
     </summary>
 
-To Be Done
+1. At first download and open the "House.FCStd" file located unter "Resources/Documentation" in the repository. Or start with whatever arch project you want. Now you should see this building in the 3D View
+
+![Untextured](./Resources/Documentation/untextured.png)
+
+2. Next switch to the Arch Texture Workbench and click the "Create TextureConfig" icon
+
+![workbench selection](./Resources/Documentation/intro_workbench_selection.png)
+
+3. Now the object should be visible in the TreeView. TextureConfigs are hidden by default when we create them and when the document loads. This is done to prevent excessive loading times on startup.
+
+![texture config](./Resources/Documentation/intro_texture_config.png)
+
+4. Now lets start texturing. Double click the TextureConfig object to display the task panel to set up some textures. After clicking the "Add Material" button, you should see something like this
+
+![task panel](./Resources/Documentation/intro_task_panel.png)
+
+5. Select ```MatBricks``` in the Material Combo Box and double click the "Texture File" column. Select a brick texture from your file system (I used textures from https://www.textures.com/). After you click "OK" nothing will happen because the TextureConfig is still hidden.
+
+6. Select the TextureConfig in the Tree View and hit the "Space" key. This will add the texture in our config to all objects with the "MatBricks" materials. When hiding the TextureConfig again, the textures will be removed from the 3D View. When the textures are visible you should see something like this
+
+![unscaled bricks](./Resources/Documentation/intro_bricks_unscaled.png)
+
+But wait! This does not really look like a brick wall at all. The texture is stretched pretty badly. But this is easy to fix.
+
+7. Double click the TextureConfig again and add the real size of the texture. The bricks texture I used is about 1200x1200 mm in size. If the size of the texture is not given, simply google the size of a single brick and multiply it with the number of bricks in your texture.
+
+![real size](./Resources/Documentation/intro_real_size.png)
+
+8. Click "OK" and check the 3D View again. Now it looks much more like a real brick wall.
+
+![scaled bricks](./Resources/Documentation/intro_bricks_scaled.png)
+
+9. Repeat the above steps for all other materials and you should end up with something like this
+
+![Textured](./Resources/Documentation/textured.png)
+
+The texture mapping works pretty OK right now. But when we look at the wooden planks or the roof we see that they are not mapped perfectly. There is already a issue (https://github.com/furti/FreeCAD-ArchTextures/issues/10) for this.
 </details>
 
 ## Technical details
