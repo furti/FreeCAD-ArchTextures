@@ -37,7 +37,7 @@
       <enum>QAbstractItemView::SelectRows</enum>
      </property>
      <property name="columnCount">
-      <number>4</number>
+      <number>5</number>
      </property>
      <attribute name="horizontalHeaderCascadingSectionResizes">
       <bool>false</bool>
@@ -66,6 +66,11 @@
      <column>
       <property name="text">
        <string>Height</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Bump Map</string>
       </property>
      </column>
     </widget>

@@ -18,20 +18,27 @@ class TextureConfigTable():
     
     def setupTable(self):
         for name, entryConfig in self.config.items():
-            self.addRow(name, entryConfig['file'], entryConfig['realSize'])
+            bumpMap = None
+            
+            if 'bumpMap' in entryConfig:
+                bumpMap = entryConfig['bumpMap']
+            
+            self.addRow(name, entryConfig['file'], entryConfig['realSize'], bumpMap)
 
-    def addRow(self, name=None, textureFile=None, realSize=None):
+    def addRow(self, name=None, textureFile=None, realSize=None, bumpMap=None):
         rowPosition = self.qtTable.rowCount()
         self.qtTable.insertRow(rowPosition)
 
         comboBox = self.materialBox(name)
         fileEdit = self.fileInput(textureFile)
         lengthEdit, heightEdit = self.sizeEdit(realSize)
+        bumpMapEdit = self.fileInput(bumpMap)
 
         self.qtTable.setCellWidget(rowPosition, 0, comboBox)
         self.qtTable.setItem(rowPosition, 1, fileEdit)
         self.qtTable.setCellWidget(rowPosition, 2, lengthEdit)
         self.qtTable.setCellWidget(rowPosition, 3, heightEdit)
+        self.qtTable.setItem(rowPosition, 4, bumpMapEdit)
     
     def removeRow(self):
         selectionModel = self.qtTable.selectionModel()
@@ -49,16 +56,22 @@ class TextureConfigTable():
             fileBox = self.qtTable.item(row, 1)
             lengthEdit = self.qtTable.cellWidget(row, 2)
             heightEdit = self.qtTable.cellWidget(row, 3)
+            bumpMapBox = self.qtTable.item(row, 4)
 
             materialName = MAT_NAME_REGEX.findall(comboBox.currentText())[0]
 
-            self.config[materialName] = {
+            config = {
                 'file': fileBox.text(),
                 'realSize': {
                     's': lengthEdit.value(),
                     't': heightEdit.value()
                 }
             }
+
+            if bumpMapBox.text() is not None and bumpMapBox.text() != "":
+                config['bumpMap'] = bumpMapBox.text()
+
+            self.config[materialName] = config
     
     def materialBox(self, materialName=None):
         materialBox = QComboBox()

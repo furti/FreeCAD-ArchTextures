@@ -11,6 +11,7 @@ class TextureManager():
                 'materials': {
                 #     '<mat_name>': {
                 #         'file': 'path_to_texture',
+                #         'bumpMap': None | 'path_to_texture',
                 #         'realSize': None | {
                 #              's': <length_in_mm>,
                 #              't': <height_in_mm>
@@ -29,7 +30,7 @@ class TextureManager():
         }
 
         self.texturedObjects = [
-            #(object, (texture, transform))
+            #(object, ((texture, textureUnit), textureCoordinates, (bumpMap, textureUnit)))
         ]
 
     def export(self, fileObject):
@@ -61,21 +62,49 @@ class TextureManager():
                     faceSet = faceset_utils.buildFaceSet(brep, vertexCoordinates)
                     textureCoords = faceSet.calculateTextureCoordinates(textureConfig['realSize'])
 
+                    bumpMap = self.generateBumpMap(textureConfig)
+
                     # faceSet.printData()
 
                     self.setupTextureCoordinateIndex(brep)
 
-                    rootnode.insertChild(texture, 1)
-                    rootnode.insertChild(textureCoords, 1)
+                    textureUnit = coin.SoTextureUnit()
+                    textureUnit.value = 0
 
-                    self.texturedObjects.append((o, (texture, textureCoords)))
+                    if bumpMap is None:
+                        rootnode.insertChild(texture, 1)
+                        rootnode.insertChild(textureCoords, 1)
+                        rootnode.insertChild(textureUnit, 1)
+
+                    bumpMapData = None
+
+                    if bumpMap is not None:
+                        bumpCoordinates = coin.SoBumpMapCoordinate()
+                        bumpCoordinates.point.setValues(0, len(textureCoords.point.getValues()), textureCoords.point.getValues())
+                        # bumpMapUnit = coin.SoTextureUnit()
+                        # bumpMapUnit.value = 0
+                        # bumpMapUnit.mappingMethod = coin.SoTextureUnit.BUMP_MAPPING
+
+                        # bumpMapData = (bumpMap, bumpMapUnit)
+                        # bumpMapData = (bumpMap)
+
+                        rootnode.insertChild(bumpMap, 1)
+                        # rootnode.insertChild(textureCoords, 1)
+                        # rootnode.insertChild(bumpMapUnit, 1)
+                    
+                    self.texturedObjects.append((o, ((texture, textureUnit), textureCoords, bumpMapData)))
     
     def removeTextures(self):
         FreeCAD.Console.PrintMessage('Removing Textures\n')
 
         for o, coinData in self.texturedObjects:
-            o.ViewObject.RootNode.removeChild(coinData[0])
+            o.ViewObject.RootNode.removeChild(coinData[0][0])
+            o.ViewObject.RootNode.removeChild(coinData[0][1])
             o.ViewObject.RootNode.removeChild(coinData[1])
+
+            if coinData[2] is not None:
+                o.ViewObject.RootNode.removeChild(coinData[2][0])
+                o.ViewObject.RootNode.removeChild(coinData[2][1])
 
         self.texturedObjects = []
     
@@ -95,18 +124,33 @@ class TextureManager():
 
             imageFile = materialConfig['file']
 
-            if imageFile not in self.textureCache:
-                tex = coin.SoTexture2()
-                tex.filename = imageFile
-                # Maybe we can use this instead of setting the color of the shape to black?
-                # Will result in white borders instead of black ones. Like the black ones more.
-                tex.model = coin.SoMultiTextureImageElement.REPLACE
+            texture = self.getOrCreateTexture(imageFile)
 
-                self.textureCache[imageFile] = tex
-            
-            return (self.textureCache[imageFile], materialConfig)
+            return (texture, materialConfig)
 
         return (None, None)
+    
+    def generateBumpMap(self, textureConfig):
+        if 'bumpMap' not in textureConfig or textureConfig['bumpMap'] is None:
+            return None
+        
+        bumpMap = coin.SoBumpMap()
+        bumpMap.filename = textureConfig['bumpMap']
+
+        return bumpMap
+
+        # return self.getOrCreateTexture(textureConfig['bumpMap'])
+    
+    def getOrCreateTexture(self, imageFile):
+        if imageFile not in self.textureCache:
+            tex = coin.SoTexture2()
+            tex.filename = imageFile
+            tex.model = coin.SoMultiTextureImageElement.REPLACE
+
+            self.textureCache[imageFile] = tex
+        
+        return self.textureCache[imageFile]
+
     
 if __name__ == "__main__":
     from os import path
