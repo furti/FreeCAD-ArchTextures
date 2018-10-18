@@ -1,5 +1,5 @@
 import FreeCAD
-# import math
+import math
 import json
 from pivy import coin
 import arch_texture_utils.faceset_utils as faceset_utils
@@ -38,7 +38,7 @@ class TextureManager():
         finally:
             fileObject.close()
 
-    def textureObjects(self):
+    def textureObjects(self, debug=False):
         # Make sure that no old textures are left. Otherwise we could end up with duplicate textures
         self.removeTextures()
 
@@ -61,7 +61,8 @@ class TextureManager():
                     faceSet = faceset_utils.buildFaceSet(brep, vertexCoordinates)
                     textureCoords = faceSet.calculateTextureCoordinates(textureConfig['realSize'])
 
-                    # faceSet.printData()
+                    if debug:
+                        faceSet.printData(textureConfig['realSize'], 4)
 
                     self.setupTextureCoordinateIndex(brep)
 
@@ -116,4 +117,4 @@ if __name__ == "__main__":
     else:
         configFile = path.join(path.dirname(path.realpath(__file__)), 'textures',FreeCAD.ActiveDocument.Name + '.json')
         
-        TextureManager(open(configFile, 'r')).textureObjects()
+        TextureManager(open(configFile, 'r')).textureObjects(debug = False)

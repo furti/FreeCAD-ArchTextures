@@ -4,6 +4,8 @@ from functools import cmp_to_key
 from pivy import coin
 from itertools import groupby
 
+DEBUG = False
+
 globalX = FreeCAD.Vector(1, 0, 0)
 globalY = FreeCAD.Vector(0, 1, 0)
 globalZ = FreeCAD.Vector(0, 0, 1)
@@ -28,17 +30,27 @@ def calculateNormal(face):
     uv = face.Surface.parameter(face.CenterOfMass)
     return face.normalAt(uv[0], uv[1])
 
-def calculateTextureCoordinate(vector, boundingBox, scaleFactor):
-    vertexS = vector.x
-    vertexT = vector.z
+def calculateTextureCoordinate(vector, boundingBox, scaleFactor, swapAxis=False):
+    if swapAxis:
+        vertexS = vector.z
+        vertexT = vector.x
 
-    sMax = boundingBox.XMax
-    tMax = boundingBox.ZMax
+        sMax = boundingBox.ZMax
+        tMax = boundingBox.XMax
+    else:
+        vertexS = vector.x
+        vertexT = vector.z
+
+        sMax = boundingBox.XMax
+        tMax = boundingBox.ZMax
+    
+    scaleS = scaleFactor[0]
+    scaleT = scaleFactor[1]
 
     s = vertexS / sMax
     t = vertexT / tMax
-    
-    return (s * scaleFactor[0], t * scaleFactor[1])
+
+    return (s * scaleS, t * scaleT)
 
 def appendCoordinate(textureCoords, index, s, t):
     textureCoords.point.set1Value(index, s, t)
@@ -47,11 +59,22 @@ class Face():
     def __init__(self):
         self.indices = []
         self.vertices = []
+        self.originalVertices = []
+
+        if DEBUG:
+            self.atOriginVertices = []
+            self.rotatedVertices = []
+            self.positiveTransform = None
     
     def addVertex(self, index, vect):
         if index not in self.indices:
             self.indices.append(index)
 
+            self.originalVertices.append({
+                'index': index,
+                'vector': toFreeCADVector(vect.getValue())
+            })
+            
             self.vertices.append({
                 'index': index,
                 'vector': toFreeCADVector(vect.getValue())
@@ -61,28 +84,51 @@ class Face():
             self.height = 0
     
     def appendTextureCoordinates(self, textureCoords, realSize):
-        scaleFactor = self.calculateScaleFactor(realSize)
+        axisSwapped = self.shouldSwapAxis(realSize)
+        scaleFactor = self.calculateScaleFactor(realSize, axisSwapped)
 
         for vertex in self.vertices:
-            s, t = calculateTextureCoordinate(vertex['vector'], self.boundingBox, scaleFactor)
+            s, t = calculateTextureCoordinate(vertex['vector'], self.boundingBox, scaleFactor, axisSwapped)
             appendCoordinate(textureCoords, vertex['index'], s, t)
     
-    def calculateScaleFactor(self, realSize):
+    def calculateScaleFactor(self, realSize, axisSwapped=False):
         tScale = 1
         sScale = 1
+
+        if axisSwapped:
+            s = self.height
+            t = self.length
+        else:
+            s = self.length
+            t = self.height
 
         if realSize is not None:
             realS = realSize['s']
 
             if realS > 0:
-                sScale = self.length / realS
+                sScale = s / realS
             
             realT = realSize['t']
 
             if realT > 0:
-                tScale = self.height / realT
+                tScale = t / realT
 
         return [sScale, tScale]
+    
+    def shouldSwapAxis(self, realSize):
+        longestTextureAxis = 's'
+        longestFaceAxis = 's'
+
+        if realSize is not None:
+            if realSize['t'] > realSize['s']:
+                longestAxis = 't'
+        
+        if self.height > self.length:
+            longestFaceAxis = 't'
+
+        shouldSwap = longestTextureAxis != longestFaceAxis
+
+        return shouldSwap
     
     def finishFace(self):
         # The first three vertices form the first triangle.
@@ -136,11 +182,19 @@ class Face():
         if transformVector.Length == 0:
             # No transformations needed
             return
-        
+
+        if DEBUG:
+            self.positiveTransform = (xMin, zMin, transformVector)
+
         for vertex in self.vertices:
+            if DEBUG:
+                self.rotatedVertices.append({
+                    'index': vertex['index'],
+                    'vector': vertex['vector']
+                })
+
             v = vertex['vector']
             vertex['vector'] = v.add(transformVector)
-
 
     def calculateRotationMatrix(self, triangle):
          # The face normal should point toward the front view
@@ -170,6 +224,12 @@ class Face():
     
     def rotate(self, matrix):
         for vertex in self.vertices:
+            if DEBUG:
+                self.atOriginVertices.append({
+                    'index': vertex['index'],
+                    'vector': vertex['vector']
+                })
+
             v = vertex['vector']
             vertex['vector'] = matrix.multiply(v)
     
@@ -186,15 +246,44 @@ class Face():
         
         return v2
 
-    def printData(self):
-        for vertex in self.vertices:
-            print('    %s' % (vertex, ))
+    def printData(self, realSize=None):
+        if DEBUG:
+            print('   atOriginVertices:')
+            for vertex in self.atOriginVertices:
+                print('    %s' % (vertex, ))
+
+            print('   rotatedVertices:')
+            for vertex in self.rotatedVertices:
+                print('    %s' % (vertex, ))
         
+
+            print('   vertices:')
+            for vertex in self.vertices:
+                print('    %s' % (vertex, ))
+            
+            print('    positiveTransform: %s' % (self.positiveTransform, ))
+            print('    swapAxis: %s' % (self.shouldSwapAxis(realSize), ))
+
+        textureCoords = coin.SoTextureCoordinate2()
+        self.appendTextureCoordinates(textureCoords, realSize)
+
+        normalizedCoords = coin.SoTextureCoordinate2()
+        self.appendTextureCoordinates(normalizedCoords, None)
+
+        print('   originalVertices:')
+        for vertex in self.originalVertices:
+            normalizedIndexCoords = normalizedCoords.point.getValues()[vertex['index']].getValue()
+            indexCoords = textureCoords.point.getValues()[vertex['index']].getValue()
+
+            print('    %s' % ({
+                'index': vertex['index'],
+                'vector': vertex['vector'],
+                'normalizedCoords': normalizedIndexCoords,
+                'coords': indexCoords
+            }, ))
+ 
         print('    length: %s, height: %s' % (self.length, self.height))
-        print('    scaleFactor: %s' % (self.calculateScaleFactor({
-                "s": 1680,
-                "t": 1440
-            }), ))
+        print('    scaleFactor: %s' % (self.calculateScaleFactor(realSize), ))
 
 class FaceSet():
     def __init__(self):
@@ -219,10 +308,14 @@ class FaceSet():
 
         return textureCoords
     
-    def printData(self):
-        for face in self.faces:
+    def printData(self, realSize=None, faceNumber=None):
+        if faceNumber is not None:
             print('Face:')
-            face.printData()
+            self.faces[faceNumber].printData(realSize)
+        else:
+            for face in self.faces:
+                print('Face:')
+                face.printData(realSize)
     
 def findVertexCoordinates(node):
      for child in node.getChildren():
@@ -289,7 +382,5 @@ if __name__ == "__main__":
     vertexCoordinates = findVertexCoordinates(rootNode)
     
     faceSet = buildFaceSet(brep, vertexCoordinates)
-    faceSet.printData()
-    textureCoords = faceSet.calculateTextureCoordinates({'s': 1680, 't': 1440})
-
-    printValues(textureCoords.point.getValues())
+    faceSet.printData({'s': 1680, 't': 1440})
+    # printValues(textureCoords.point.getValues())
