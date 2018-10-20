@@ -55,7 +55,7 @@ But wait! This does not really look like a brick wall at all. The texture is str
 
 ![Textured](./Resources/Documentation/textured.png)
 
-The texture mapping works pretty OK right now. But when we look at the wooden planks or the roof we see that they are not mapped perfectly. There is already a issue (https://github.com/furti/FreeCAD-ArchTextures/issues/10) for this.
+The texture mapping works pretty OK right now. But when we look at the wooden planks or the roof we see that they are not mapped perfectly. There is already an issue (https://github.com/furti/FreeCAD-ArchTextures/issues/10) for this.
 </details>
 
 ## Troubleshooting
@@ -148,3 +148,6 @@ When the user sets the ```realSize``` property of the texture config, we use thi
 After we know how big the image should be we simply calculate each vertex coordinate relative to the bounding box. Lets say we have a vertex in the middle of our image. It should map to the 0.5/0.5 coordinates of the image.
 
 </details>
+
+## Support
+Found a bug? Have a nice feature request? simply create an issue in this repository or post to this FreeCAD Forum thread https://forum.freecadweb.org/viewtopic.php?f=9&t=31598.
