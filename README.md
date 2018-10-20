@@ -64,6 +64,13 @@ The texture mapping works pretty OK right now. But when we look at the wooden pl
 
 When something happens and you end up with broken textures or a broken 3D View (e.g. you deleted the TextureConfig before hiding it) you can always close the document and reopen it. The TextureConfig is hidden by default and no textures will be shown after a reload.
 
+## Texture mapping
+
+When mapping the texture to a face the algorithm works as follows:
+
+ 1. When the real size is set and the texture is not quadratic, the algorithm maps the longest side of the texture to the longest side of the face
+ 2. When the real size is not set or the texture is quadratic, the algorithm maps the "s" side of the texture to the longest side of the face
+
 ## Technical details
 <details>
     <summary>
