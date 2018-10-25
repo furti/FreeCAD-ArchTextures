@@ -327,6 +327,21 @@ def findSwitch(node):
         if child.getTypeId().getName() == 'Switch':
             return child
 
+def findShadedNode(node):
+    children = node.getChildren()
+
+    if children is None or children.getLength() == 0:
+        return None
+    
+    for child in children:
+        if child.getTypeId().getName() == 'SoBrepFaceSet':
+            return node
+        
+        shadedNode = findShadedNode(child)
+
+        if shadedNode is not None:
+            return shadedNode
+
 def findBrepFaceset(node):
     children = node.getChildren()
 
@@ -336,11 +351,8 @@ def findBrepFaceset(node):
     for child in children:
         if child.getTypeId().getName() == 'SoBrepFaceSet':
             return child
-        
-        brep = findBrepFaceset(child)
-
-        if brep is not None:
-            return brep
+    
+    return None
 
 def buildFaceCoordinates(brep):
     triangles = []

@@ -29,7 +29,7 @@ class TextureManager():
         }
 
         self.texturedObjects = [
-            #(object, (texture, transform))
+            #(object, shadedNode, (texture, transform))
         ]
 
     def export(self, fileObject):
@@ -56,7 +56,8 @@ class TextureManager():
 
                     rootnode = o.ViewObject.RootNode
                     switch = faceset_utils.findSwitch(rootnode)
-                    brep = faceset_utils.findBrepFaceset(switch)
+                    shadedNode = faceset_utils.findShadedNode(switch)
+                    brep = faceset_utils.findBrepFaceset(shadedNode)
                     vertexCoordinates = faceset_utils.findVertexCoordinates(rootnode)
                     faceSet = faceset_utils.buildFaceSet(brep, vertexCoordinates)
                     textureCoords = faceSet.calculateTextureCoordinates(textureConfig['realSize'])
@@ -66,17 +67,17 @@ class TextureManager():
 
                     self.setupTextureCoordinateIndex(brep)
 
-                    rootnode.insertChild(texture, 1)
-                    rootnode.insertChild(textureCoords, 1)
+                    shadedNode.insertChild(texture, 1)
+                    shadedNode.insertChild(textureCoords, 1)
 
-                    self.texturedObjects.append((o, (texture, textureCoords)))
+                    self.texturedObjects.append((o, shadedNode, (texture, textureCoords)))
     
     def removeTextures(self):
         FreeCAD.Console.PrintMessage('Removing Textures\n')
 
-        for o, coinData in self.texturedObjects:
-            o.ViewObject.RootNode.removeChild(coinData[0])
-            o.ViewObject.RootNode.removeChild(coinData[1])
+        for o, shadedNode, coinData in self.texturedObjects:
+            shadedNode.removeChild(coinData[0])
+            shadedNode.removeChild(coinData[1])
 
         self.texturedObjects = []
     
@@ -87,7 +88,7 @@ class TextureManager():
         coordinateIndex = brep.coordIndex.getValues()
 
         brep.textureCoordIndex.setValues(0, len(coordinateIndex), coordinateIndex)
-    
+
     def getTextureForMaterial(self, material):
         materialName = material.Name
 
