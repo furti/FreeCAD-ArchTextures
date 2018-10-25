@@ -4,6 +4,25 @@ import json
 from pivy import coin
 import arch_texture_utils.faceset_utils as faceset_utils
 
+class TextureConfigEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, FreeCAD.Vector):
+            return [obj.x, obj.y, obj.z]
+    
+        return json.JSONEncoder.default(self, obj)
+
+class TextureConfigDecoder(json.JSONDecoder):
+    def __init__(self, *args, **kwargs):
+        json.JSONDecoder.__init__(self, object_hook=self.object_hook, *args, **kwargs)
+    
+    def object_hook(self, dct):
+        if 'vertices' in dct:
+            vectors = [FreeCAD.Vector(vertices[0], vertices[1], vertices[2]) for vertices in dct['vertices']]
+
+            dct['vertices'] = vectors
+        
+        return dct
+
 class TextureManager():
     def __init__(self, fileObject=None):
         if fileObject is None:
@@ -16,11 +35,18 @@ class TextureManager():
                 #              't': <height_in_mm>
                 #          }
                 #     }
-                }
+                },
+                'faceOverrides': [
+                #    {
+                #       'vertices': [],
+                #       'objectName': '<name_of_object_the_face_belongs_to>',
+                #       'rotation': <rotation_in_degrees>
+                #    }
+                ]
             }
         else:
             try:
-                self.textureData = json.load(fileObject, encoding='utf-8')
+                self.textureData = json.load(fileObject, encoding='utf-8', cls=TextureConfigDecoder)
             finally:
                 fileObject.close()
 
@@ -34,9 +60,15 @@ class TextureManager():
 
     def export(self, fileObject):
         try:
-            json.dump(self.textureData, fileObject, sort_keys=True, indent=4, ensure_ascii=False)
+            json.dump(self.textureData, fileObject, sort_keys=True, indent=4, ensure_ascii=False, cls=TextureConfigEncoder)
         finally:
             fileObject.close()
+    
+    def serializeTextureData(self):
+        return json.dumps(self.textureData, sort_keys=True, indent=4, ensure_ascii=False, cls=TextureConfigEncoder)
+    
+    def deserializeTextureData(self, textureDataAsString):
+        self.textureData = json.loads(textureDataAsString, encoding='utf-8', cls=TextureConfigDecoder)
 
     def textureObjects(self, debug=False):
         # Make sure that no old textures are left. Otherwise we could end up with duplicate textures
@@ -59,7 +91,9 @@ class TextureManager():
                     shadedNode = faceset_utils.findShadedNode(switch)
                     brep = faceset_utils.findBrepFaceset(shadedNode)
                     vertexCoordinates = faceset_utils.findVertexCoordinates(rootnode)
-                    faceSet = faceset_utils.buildFaceSet(brep, vertexCoordinates)
+                    transform = faceset_utils.findTransform(rootnode)
+
+                    faceSet = faceset_utils.buildFaceSet(brep, vertexCoordinates, self.getFaceOverrides(), transform)
                     textureCoords = faceSet.calculateTextureCoordinates(textureConfig['realSize'])
 
                     if debug:
@@ -72,6 +106,18 @@ class TextureManager():
 
                     self.texturedObjects.append((o, shadedNode, (texture, textureCoords)))
     
+    def ensureFaceOverrides(self):
+        if 'faceOverrides' not in self.textureData:
+            self.textureData['faceOverrides'] = []
+        
+        return self.textureData['faceOverrides']
+    
+    def getFaceOverrides(self):
+        if 'faceOverrides' in self.textureData:
+            return self.textureData['faceOverrides']
+        else:
+            return None
+
     def removeTextures(self):
         FreeCAD.Console.PrintMessage('Removing Textures\n')
 

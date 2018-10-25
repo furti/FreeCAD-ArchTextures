@@ -57,7 +57,17 @@ But wait! This does not really look like a brick wall at all. The texture is str
 
 ![Textured](./Resources/Documentation/textured.png)
 
-The texture mapping works pretty OK right now. But when we look at the wooden planks or the roof we see that they are not mapped perfectly. There is already an issue (https://github.com/furti/FreeCAD-ArchTextures/issues/10) for this.
+10. Most of the textures look good. But it might be, that the roof does not look like expected. The texture should be mapped so that the lines run horizontally but they run oblique accross the faces.
+
+![Oblique](./Resources/Documentation/oblique_roof.png)
+
+But this is pretty easy to fix. Select the TextureConfig in the TreeView and click the "Configure Faces" button.
+
+![Configure Faces Command](./Resources/Documentation/configure_faces_command.png)
+
+Now enter the angle in degrees you want to rotate a certain face. Positive values rotate the texture clockwise and negative values counter clockwise. For our roof a rotation of 55 degrees for the front and back faces and -55 degrees for the side faces should work pretty well. Now select the faces you want to set the rotation for and click "Apply". The rotation is applied immediately. You have to unselect the faces to see the rotated texture.
+
+![Configure Faces Command](./Resources/Documentation/straight_roof.png)
 </details>
 
 ## Troubleshooting

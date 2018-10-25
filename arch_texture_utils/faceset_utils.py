@@ -4,7 +4,7 @@ from functools import cmp_to_key
 from pivy import coin
 from itertools import groupby
 
-DEBUG = False
+DEBUG = True
 
 globalX = FreeCAD.Vector(1, 0, 0)
 globalY = FreeCAD.Vector(0, 1, 0)
@@ -55,6 +55,35 @@ def calculateTextureCoordinate(vector, boundingBox, scaleFactor, swapAxis=False)
 def appendCoordinate(textureCoords, index, s, t):
     textureCoords.point.set1Value(index, s, t)
 
+def extractOverrides(overrides):
+    extractedOverrides = [None]
+
+    if overrides is not None:
+        if 'rotation' in overrides:
+            # reverse the rotation. Because we rotate the face and not the image.
+            # This means a positive face rotation will mean a negative image rotation
+            # When reversing it we get the intended rotation
+            extractedOverrides[0] = overrides['rotation'] * -1
+
+    return tuple(extractedOverrides)
+
+def vectorListEquals(vectors1, vectors2):
+    if len(vectors1) != len(vectors2):
+        return False
+        
+    for vector1 in vectors1:
+        found = False
+        
+        for vector2 in vectors2:
+            if vector1.isEqual(vector2, 0.01):
+                found = True
+                break
+        
+        if not found:
+            return False
+    
+    return True
+
 class Face():
     def __init__(self):
         self.indices = []
@@ -64,6 +93,7 @@ class Face():
         if DEBUG:
             self.atOriginVertices = []
             self.rotatedVertices = []
+            self.positiveAxisVertices = []
             self.positiveTransform = None
     
     def addVertex(self, index, vect):
@@ -83,6 +113,11 @@ class Face():
             self.length = 0
             self.height = 0
     
+    def matches(self, vectors):
+        ownVectors = [ownVertex['vector'] for ownVertex in self.originalVertices]
+
+        return vectorListEquals(ownVectors, vectors)
+
     def appendTextureCoordinates(self, textureCoords, realSize):
         axisSwapped = self.shouldSwapAxis(realSize)
         scaleFactor = self.calculateScaleFactor(realSize, axisSwapped)
@@ -130,12 +165,17 @@ class Face():
 
         return shouldSwap
     
-    def finishFace(self):
+    def finishFace(self, overrides=None):
         # The first three vertices form the first triangle.
         # We use this information to get the normal and the offset from the origin
         # of the whole face
 
+        if DEBUG:
+            self.overrides = overrides
+
         # Calculations based on http://www.meshola.com/Articles/converting-between-coordinate-systems
+        textureRotation, = extractOverrides(overrides)
+
         offsetVector = self.vertices[0]['vector']
         self.moveToOrigin(offsetVector)
 
@@ -148,6 +188,45 @@ class Face():
         self.boundingBox = self.calculateBoundBox()
         self.length = self.boundingBox.XLength
         self.height = self.boundingBox.ZLength
+
+        if textureRotation is not None:
+            self.rotateAroundYAxis(textureRotation)
+
+    def normalizeTransform(self, transform):
+        '''
+        Lets say we have a object with a Vertex at (0,0,0) and a Placement of x=0,y=0,z=1000.
+        Now when we select a face and check the vertices we get a point at (0,0,1000) because there is a placement applied.
+        But in the Coin3D scene graph the vertex is still at (0,0,0) because FreeCAD applies a transform node with the translation of (0,0,1000). So the vertices are rendered at the right place, but we can't map selected faces to scene graph faces for face overrides anymore.
+        To account for that we add the transform node to each vertex so we have the same values as FreeCAD.
+        '''
+        if transform is None:
+            return
+        
+        translation = transform.translation.getValue().getValue()
+        translationVector = FreeCAD.Vector(translation[0], translation[1], translation[2])
+
+        for vertex in self.originalVertices:
+            if DEBUG:
+                self.positiveAxisVertices.append({
+                    'index': vertex['index'],
+                    'vector': vertex['vector']
+                })
+
+            v = vertex['vector']
+            vertex['vector'] = v.add(translationVector)
+
+    def rotateAroundYAxis(self, angle):
+        rotation = FreeCAD.Rotation(globalY, angle)
+
+        for vertex in self.vertices:
+            if DEBUG:
+                self.positiveAxisVertices.append({
+                    'index': vertex['index'],
+                    'vector': vertex['vector']
+                })
+
+            v = vertex['vector']
+            vertex['vector'] = rotation.multVec(v)
 
     def calculateBoundBox(self):
         xValues = [vertex['vector'][0] for vertex in self.vertices]
@@ -255,7 +334,10 @@ class Face():
             print('   rotatedVertices:')
             for vertex in self.rotatedVertices:
                 print('    %s' % (vertex, ))
-        
+            
+            print('   positiveAxisVertices:')
+            for vertex in self.positiveAxisVertices:
+                print('    %s' % (vertex, ))
 
             print('   vertices:')
             for vertex in self.vertices:
@@ -263,6 +345,7 @@ class Face():
             
             print('    positiveTransform: %s' % (self.positiveTransform, ))
             print('    swapAxis: %s' % (self.shouldSwapAxis(realSize), ))
+            print('    overrides: %s' % (self.overrides, ))
 
         textureCoords = coin.SoTextureCoordinate2()
         self.appendTextureCoordinates(textureCoords, realSize)
@@ -284,19 +367,22 @@ class Face():
  
         print('    length: %s, height: %s' % (self.length, self.height))
         print('    scaleFactor: %s' % (self.calculateScaleFactor(realSize), ))
+        print('    textureRotation: %s' % (self.calculateScaleFactor(realSize), ))
 
 class FaceSet():
     def __init__(self):
         self.faces = []
     
-    def addFace(self, faceCoordinates, vertices):
+    def addFace(self, faceCoordinates, vertices, faceOverrides=None, transform=None):
         face = Face()
 
         for coordinate in faceCoordinates:
             for index in coordinate:
                 face.addVertex(index, vertices[index])
         
-        face.finishFace()
+
+        face.normalizeTransform(transform)
+        face.finishFace(findOverridesForFace(face, faceOverrides))
 
         self.faces.append(face)
     
@@ -369,17 +455,38 @@ def buildFaceCoordinates(brep):
 
     return faces
 
-def buildFaceSet(brep, vertexCoordinates):
+def findOverridesForFace(face, faceOverrides=None):
+    if faceOverrides is None:
+        return  None
+    
+    for faceOverride in faceOverrides:
+        if face.matches(faceOverride['vertices']):
+            return faceOverride
+    
+    return None
+
+def buildFaceSet(brep, vertexCoordinates, faceOverrides=None, transform=None):
     faceSet = FaceSet()
     
     faceCoordinateList = buildFaceCoordinates(brep)
     vertexValues = vertexCoordinates.point.getValues()
 
     for faceCoordinates in faceCoordinateList:
-        faceSet.addFace(faceCoordinates, vertexValues)
+        faceSet.addFace(faceCoordinates, vertexValues, faceOverrides, transform)
 
     return faceSet
 
+def findTransform(node):
+    children = node.getChildren()
+
+    if children is None or children.getLength() == 0:
+        return None
+    
+    for child in children:
+        if child.getTypeId().getName() == 'Transform':
+            return child
+    
+    return None
 
 if __name__ == "__main__":
     def printValues(l):
@@ -388,11 +495,37 @@ if __name__ == "__main__":
         for index, e in enumerate(l):
             print('%s: %s' % (index, e.getValue()))
     
-    rootNode = FreeCAD.ActiveDocument.Wall.ViewObject.RootNode
-    switch = findSwitch(rootNode)
-    brep = findBrepFaceset(switch)
-    vertexCoordinates = findVertexCoordinates(rootNode)
+    testOverrides = [
+        {
+            'objectName': 'Wall',
+            'vertices': [
+                FreeCAD.Vector(-4100.0, -100.00000000000026, 0.0),
+                FreeCAD.Vector(-4100.0, -100.00000000000026, 500.0),
+                FreeCAD.Vector(-4100.0, 99.99999999999974, 0.0),
+                FreeCAD.Vector(-4100.0, 99.99999999999974, 500.0)
+            ],
+            'rotation': 90
+        },
+        {
+            'objectName': 'Roof',
+            'rotation': 20.0,
+            'vertices': [
+                FreeCAD.Vector(4100.0, 5100.0, 2970.7106781186544),
+                FreeCAD.Vector(2000.0, 3000.0, 5070.710678118655),
+                FreeCAD.Vector(4100.0, -99.99999999999955, 2970.7106781186544),
+                FreeCAD.Vector(2000.0, 2000.0, 5070.710678118654),
+                FreeCAD.Vector(1999.9999999999998, 2500.0, 5070.710678118654)
+            ]
+        }
+    ]
     
-    faceSet = buildFaceSet(brep, vertexCoordinates)
+    rootNode = FreeCAD.ActiveDocument.Roof.ViewObject.RootNode
+    switch = findSwitch(rootNode)
+    shadedNode = findShadedNode(switch)
+    brep = findBrepFaceset(shadedNode)
+    vertexCoordinates = findVertexCoordinates(rootNode)
+    transform = findTransform(rootNode)
+
+    faceSet = buildFaceSet(brep, vertexCoordinates, testOverrides, transform)
     faceSet.printData({'s': 1680, 't': 1440})
     # printValues(textureCoords.point.getValues())

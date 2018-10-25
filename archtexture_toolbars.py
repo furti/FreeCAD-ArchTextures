@@ -14,3 +14,4 @@ toolbarManager = ArchTextureToolbarManager()
 import create_config
 import at_export_config
 import at_import_config
+import at_configure_faces
