@@ -19,7 +19,7 @@ and should finnaly end up here
 ![Textured](./Resources/Documentation/textured.png)
     </summary>
 
-**The workbench is only tested with python 3 builds right now. It does not work with python 2.**
+**The workbench works with FreeCAD 0.18 Python 3 and Python 2 builds. It might also work with older versions but is not tested so far**
 
 1. At first download and open the "House.FCStd" file located unter "Resources/Documentation" in the repository. Or start with whatever arch project you want. Now you should see this building in the 3D View
 
