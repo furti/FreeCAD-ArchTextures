@@ -3,7 +3,7 @@ import FreeCAD, FreeCADGui
 from arch_texture_utils.resource_utils import iconPath, uiPath
 import arch_texture_utils.qtutils as qtutils
 from arch_texture_utils.selection_utils import findSelectedTextureConfig, findSelectedFacesAsVectors
-from faceset_utils import vectorListEquals
+from arch_texture_utils.faceset_utils import vectorListEquals
 
 class FaceConfigPanel():
     def __init__(self, textureConfig, freecadObject):
