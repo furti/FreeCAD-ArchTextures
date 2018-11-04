@@ -16,7 +16,7 @@ QDoubleSpinBox = QtWidgets.QDoubleSpinBox
 QDialogButtonBox = QtWidgets.QDialogButtonBox
 
 # File patterns
-IMAGE_FILES = "Image Files (*.png *.jpg *.bmp, *.tif)"
+IMAGE_FILES = "Image Files (*.png *.jpg *.bmp *.tif)"
 JSON_FILES = "JSON Files (*.json)"
 
 # methods
