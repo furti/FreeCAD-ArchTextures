@@ -5,8 +5,9 @@ This workbench allows you to add textures to architectural objects directly in F
 ## Motivation
 I was working on a arch project in FreeCAD. When the geometry was pretty much finished I decided that the building needs some texturing. This will help dramatically in understanding the overall idea (This is made from wood, there are bricks,...). I know Blender a bit and can produce texture materials that look quite good (at least for me :D) but I am lazy. I don't want to switch back and force between applications when something changes. And as my goal was not to create photorealistic renderings, i decided to do it in FreeCAD.
 
-
 ## Getting started
+
+A good advice right at the beginning: Apply textures only **after** you finished modelling your geometry. Otherwise it might be easily possible that you break your texture mapping later on and have to do it again.
 
 <details>
     <summary>
