@@ -167,17 +167,17 @@ class TextureConfig():
     
     def __setstate__(self, state):
         '''Load the texture config from the FreeCAD File'''
-        
+
         self.textureManager = TextureManager()
 
         textureData = state[0]
 
-        if isinstance(textureData, str):
-            # newer version store a json string
-            self.textureManager.deserializeTextureData(textureData)
-        else:
+        if isinstance(textureData, dict):
             # older versions stored the texture data directly
             self.textureManager.textureData = state[0]
+        else:
+            # newer version store a json string
+            self.textureManager.deserializeTextureData(textureData)
 
         self.isTextureConfig = True
 
