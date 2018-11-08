@@ -81,6 +81,68 @@ When mapping the texture to a face the algorithm works as follows:
 
  1. When the real size is set and the texture is not quadratic, the algorithm maps the longest side of the texture to the longest side of the face
  2. When the real size is not set or the texture is quadratic, the algorithm maps the "s" side of the texture to the longest side of the face
+ 3. When a override is set for a face, and the override has a rotation other the 0, this rotation will be used to rotate the texture on this face
+
+## Environment Textures
+<details>
+    <summary>
+When you have done some texturing and want to show off your work, the simplest way would be to create a screenshot inside freecad. You position your camera perfectly and take a shot.
+
+![No Environment](./Resources/Documentation/textured_no_environment.png)
+
+Not that exiting. The default background migt work when building a cloud-castle ;). But for buildings on earth some natural background would be way better. Then environment config exactly does this.
+
+With the right config you can enhance your screenshots a lot and get something like this:
+
+![With Environment](./Resources/Documentation/textured_environment.png)
+
+Read more...
+    </summary>
+
+**Attention** Does currently not work with Python 2 Builds of FreeCAD (https://github.com/furti/FreeCAD-ArchTextures/issues/21)
+
+To create a new EnvironmentConfig you click the "Create EnvironmentConfig" command.
+
+![Create EnvironmentConfig](./Resources/Icons/CreateEnvironmentConfig.svg)
+
+This will create a new EnvironmentConfig object in the TreeView with some default settings applied. You can show and hide a EnvironmentConfig object like other objects in FreeCAD.
+
+You might notice, that event though the object is visible, nothing is shown in the 3D view. This is because no textures are configured yet. Only when a texture is configured for a given part of the environment, this part will be displayed.
+
+![Settings](./Resources/Documentation/Environment_Config.png)
+
+### Ground Image
+This is the image that should be displayed on the ground plane. This should be a quadratic image as the ground plane is also quadratic.
+
+### Panorama Image
+This image is displayed behind your geometry. You can define the length and hight of this plane with the properties of the same name.
+
+### Sky Image
+This is the image that is displayed above the panorama image as the sky. The length is the same as for the panorama Image. The height is calculated according to the sky overlap, radius and length properties.
+
+To understand the geometry properties a bit better we can look at this image
+![Settings](./Resources/Documentation/Panorama_Geometry_Overview.png)
+
+The green line is the panorama texture seen from top view.
+
+### Length
+Defines the Length of this line.
+
+### Height
+Defines the height of the resulting plane.
+
+### Radius
+This is the radius of the blue circle. Basically this defines the distance from the origin to the panorama image plane.
+
+### Sky Overlap
+The Sky plane is positioned similar to the panorama plane. It is offset from the panorama plane by 1 meter (The blue circle will have Radius + 1m) and continues above the panorama plane in a 45 degree angle to the origin.
+
+This property defines the distance, the sky plane should run down behind the panorama plane. This is especially useful when you have a panorama with transparency where the sky should be. Then your sky is visible where the panorama is transparent.
+
+### Rotation
+The image above displays the default placement of the environment textures. The rotation can be used to rotate the whole environment around the Z axis. You can use this to orient the environment to face your camera.
+
+</details>
 
 ## Technical details
 <details>
