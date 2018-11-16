@@ -365,6 +365,7 @@ class ViewProviderEnvironmentConfig():
         if prop in GEOMETRY_COORDINATES:
             self.updatePanoramaCoordinates()
             self.updateSkyCoordinates()
+            self.updateGroundCoordinates()
         elif prop == 'Rotation':
             self.updateTransformNode()
         elif prop == 'PanoramaImage':
