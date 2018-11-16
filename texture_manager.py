@@ -1,11 +1,9 @@
 import FreeCAD
 import math
 import json
-import sys
 from pivy import coin
 import arch_texture_utils.faceset_utils as faceset_utils
-
-IS_PY_2 = sys.version_info.major < 3
+import arch_texture_utils.py2_utils as py2_utils
 
 class TextureConfigEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -144,10 +142,7 @@ class TextureManager():
         if materialName in self.textureData['materials']:
             materialConfig = self.textureData['materials'][materialName]
 
-            imageFile = materialConfig['file']
-
-            if IS_PY_2:
-                imageFile = imageFile.encode('utf-8', 'strict')
+            imageFile = py2_utils.textureFileString(materialConfig['file'])
 
             if imageFile not in self.textureCache:
                 tex = coin.SoTexture2()

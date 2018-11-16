@@ -1,6 +1,7 @@
 import FreeCAD, FreeCADGui
 from pivy import coin
 import math
+import arch_texture_utils.py2_utils as py2_utils
 
 GEOMETRY_COORDINATES = ['Radius', 'Length', 'Height']
 ROTATION_VECTOR = coin.SbVec3f(0, 0, -1)
@@ -117,7 +118,7 @@ class ViewProviderEnvironmentConfig():
         textureCoordinates.point.set1Value(11, twoThirds, 1)
 
         self.panoramaTexture = coin.SoTexture2()
-        self.panoramaTexture.filename = self.Object.PanoramaImage
+        self.panoramaTexture.filename = py2_utils.textureFileString(self.Object.PanoramaImage)
         self.panoramaTexture.model = coin.SoMultiTextureImageElement.REPLACE
 
         faceset = coin.SoFaceSet()
@@ -138,7 +139,7 @@ class ViewProviderEnvironmentConfig():
         self.skyCoordinates = coin.SoCoordinate3()
 
         self.skyTexture = coin.SoTexture2()
-        self.skyTexture.filename = self.Object.SkyImage
+        self.skyTexture.filename = py2_utils.textureFileString(self.Object.SkyImage)
         self.skyTexture.model = coin.SoMultiTextureImageElement.REPLACE
 
         self.skyTextureCoordinates = coin.SoTextureCoordinate2()
@@ -164,7 +165,7 @@ class ViewProviderEnvironmentConfig():
         self.groundCoordinates = coin.SoCoordinate3()
 
         self.groundTexture = coin.SoTexture2()
-        self.groundTexture.filename = self.Object.GroundImage
+        self.groundTexture.filename = py2_utils.textureFileString(self.Object.GroundImage)
         self.groundTexture.model = coin.SoMultiTextureImageElement.REPLACE
 
         groundTextureCoordinates = coin.SoTextureCoordinate2()
@@ -369,13 +370,13 @@ class ViewProviderEnvironmentConfig():
         elif prop == 'Rotation':
             self.updateTransformNode()
         elif prop == 'PanoramaImage':
-            self.panoramaTexture.filename = self.Object.PanoramaImage
+            self.panoramaTexture.filename = py2_utils.textureFileString(self.Object.PanoramaImage)
             self.updateNodeVisibility()
         elif prop == 'SkyImage':
-            self.skyTexture.filename = self.Object.SkyImage
+            self.skyTexture.filename = py2_utils.textureFileString(self.Object.SkyImage)
             self.updateNodeVisibility()
         elif prop == 'GroundImage':
-            self.groundTexture.filename = self.Object.GroundImage
+            self.groundTexture.filename = py2_utils.textureFileString(self.Object.GroundImage)
             self.updateNodeVisibility()
     
     def __getstate__(self):
