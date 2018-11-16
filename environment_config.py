@@ -4,6 +4,7 @@ import math
 import arch_texture_utils.py2_utils as py2_utils
 
 GEOMETRY_COORDINATES = ['Radius', 'Length', 'Height']
+TRANSFORM_PARAMETERS = ['ZOffset', 'Rotation']
 ROTATION_VECTOR = coin.SbVec3f(0, 0, -1)
 
 def noTexture(image):
@@ -36,6 +37,7 @@ class EnvironmentConfig():
         obj.addProperty("App::PropertyLength", "Height", "Geometry", "The overall Height of the environment panorama texture").Height = 50000
         obj.addProperty("App::PropertyLength", "SkyOverlap", "Geometry", "The distance the sky overlaps with the panorama texture").SkyOverlap = 25000
         obj.addProperty("App::PropertyAngle", "Rotation", "Geometry", "The rotation for the environment").Rotation = 0
+        obj.addProperty("App::PropertyDistance", "ZOffset", "Geometry", "The offset of the environment on the Z-Axis").ZOffset = -1
         
         obj.addProperty("App::PropertyFile", "PanoramaImage", "Texture", "The image of the panorama to show as environment texture").PanoramaImage = ''
         obj.addProperty("App::PropertyFile", "SkyImage", "Texture", "The image of the sky to show as environment texture").SkyImage = ''
@@ -88,8 +90,11 @@ class ViewProviderEnvironmentConfig():
 
     def updateTransformNode(self):
         rotation = math.radians(self.Object.Rotation.Value)
+        translation = coin.SoSFVec3f()
+        translation.setValue(coin.SbVec3f(0, 0, self.Object.ZOffset.Value))
 
         self.transformNode.rotation.setValue(ROTATION_VECTOR, rotation)
+        self.transformNode.translation.setValue(translation)
 
     def setupPanoramaNode(self):
         panoramaNode = coin.SoSeparator()
@@ -367,7 +372,7 @@ class ViewProviderEnvironmentConfig():
             self.updatePanoramaCoordinates()
             self.updateSkyCoordinates()
             self.updateGroundCoordinates()
-        elif prop == 'Rotation':
+        elif prop in TRANSFORM_PARAMETERS:
             self.updateTransformNode()
         elif prop == 'PanoramaImage':
             self.panoramaTexture.filename = py2_utils.textureFileString(self.Object.PanoramaImage)

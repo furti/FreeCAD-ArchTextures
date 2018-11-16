@@ -112,10 +112,10 @@ You might notice, that event though the object is visible, nothing is shown in t
 ![Settings](./Resources/Documentation/Environment_Config.png)
 
 ### Ground Image
-This is the image that should be displayed on the ground plane. This should be a quadratic image as the ground plane is also quadratic.
+This is the image that should be displayed on the ground plane. This should be a quadratic image as the ground plane is also quadratic. The size of the ground plane is calculated according to the radius and length properties.
 
 ### Panorama Image
-This image is displayed behind your geometry. You can define the length and hight of this plane with the properties of the same name.
+This image is displayed behind your geometry. You can define the length and height of this plane with the properties of the same name.
 
 ### Sky Image
 This is the image that is displayed above the panorama image as the sky. The length is the same as for the panorama Image. The height is calculated according to the sky overlap, radius and length properties.
@@ -141,6 +141,10 @@ This property defines the distance, the sky plane should run down behind the pan
 
 ### Rotation
 The image above displays the default placement of the environment textures. The rotation can be used to rotate the whole environment around the Z axis. You can use this to orient the environment to face your camera.
+
+### ZOffset
+This property can be used to move the environment up and down the Z-Axis. This is useful to have the ground plane displayed below your geometry.
+By default this property is set to -1mm so that it is below all geometry on the origin plane.
 
 </details>
 
