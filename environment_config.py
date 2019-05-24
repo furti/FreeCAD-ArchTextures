@@ -353,6 +353,9 @@ class ViewProviderEnvironmentConfig():
         self.skyTextureCoordinates.point.set1Value(22, 0.5, 1)
     
     def calculateSkyOverlapRatio(self):
+        if self.Object.SkyOverlap.Value == 0:
+            return 0
+        
         return 1 / (self.fullSkyLength / self.Object.SkyOverlap.Value)
 
     def onChanged(self, vp, prop):
@@ -372,6 +375,8 @@ class ViewProviderEnvironmentConfig():
             self.updatePanoramaCoordinates()
             self.updateSkyCoordinates()
             self.updateGroundCoordinates()
+        elif prop == 'SkyOverlap':
+            self.updateSkyCoordinates()
         elif prop in TRANSFORM_PARAMETERS:
             self.updateTransformNode()
         elif prop == 'PanoramaImage':
