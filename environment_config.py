@@ -1,4 +1,5 @@
-import FreeCAD, FreeCADGui
+import FreeCAD
+import FreeCADGui
 from pivy import coin
 import math
 import arch_texture_utils.py2_utils as py2_utils
@@ -7,55 +8,94 @@ GEOMETRY_COORDINATES = ['Radius', 'Length', 'Height']
 TRANSFORM_PARAMETERS = ['ZOffset', 'Rotation']
 ROTATION_VECTOR = coin.SbVec3f(0, 0, -1)
 
+
 def noTexture(image):
     if image is None or image == '':
         return True
-    
+
     return False
+
 
 def containsNode(parent, node):
     childs = parent.getChildren()
 
     return node in childs
 
+
 def addNode(parent, node):
     if not containsNode(parent, node):
         parent.addChild(node)
 
+
 def removeNode(parent, node):
     if containsNode(parent, node):
         parent.removeChild(node)
+
 
 class EnvironmentConfig():
     def __init__(self, obj):
         obj.Proxy = self
 
         self.isEnvironmentConfig = True
+        self.setProperties(obj)
 
-        obj.addProperty("App::PropertyLength", "Radius", "Geometry", "The Distance from the center of the coordinate system to the environment textures").Radius = 50000
-        obj.addProperty("App::PropertyLength", "Length", "Geometry", "The overall Length of the environment panorama texture").Length = 150000
-        obj.addProperty("App::PropertyLength", "Height", "Geometry", "The overall Height of the environment panorama texture").Height = 50000
-        obj.addProperty("App::PropertyLength", "SkyOverlap", "Geometry", "The distance the sky overlaps with the panorama texture").SkyOverlap = 25000
-        obj.addProperty("App::PropertyAngle", "Rotation", "Geometry", "The rotation for the environment").Rotation = 0
-        obj.addProperty("App::PropertyDistance", "ZOffset", "Geometry", "The offset of the environment on the Z-Axis").ZOffset = -1
-        
-        obj.addProperty("App::PropertyFile", "PanoramaImage", "Texture", "The image of the panorama to show as environment texture").PanoramaImage = ''
-        obj.addProperty("App::PropertyFile", "SkyImage", "Texture", "The image of the sky to show as environment texture").SkyImage = ''
-        obj.addProperty("App::PropertyFile", "GroundImage", "Texture", "The image of the ground to show as environment texture").GroundImage = ''
-    
+    def setProperties(self, obj):
+
+        pl = obj.PropertiesList
+
+        if not 'Radius' in pl:
+            obj.addProperty("App::PropertyLength", "Radius", "Geometry",
+                            "The Distance from the center of the coordinate system to the environment textures").Radius = 50000
+
+        if not 'Length' in pl:
+            obj.addProperty("App::PropertyLength", "Length", "Geometry",
+                            "The overall Length of the environment panorama texture").Length = 150000
+
+        if not 'Height' in pl:
+            obj.addProperty("App::PropertyLength", "Height", "Geometry",
+                            "The overall Height of the environment panorama texture").Height = 50000
+
+        if not 'SkyOverlap' in pl:
+            obj.addProperty("App::PropertyLength", "SkyOverlap", "Geometry",
+                            "The distance the sky overlaps with the panorama texture").SkyOverlap = 25000
+
+        if not 'Rotation' in pl:
+            obj.addProperty("App::PropertyAngle", "Rotation", "Geometry",
+                            "The rotation for the environment").Rotation = 0
+
+        if not 'ZOffset' in pl:
+            obj.addProperty("App::PropertyDistance", "ZOffset", "Geometry",
+                            "The offset of the environment on the Z-Axis").ZOffset = -1
+
+        if not 'PanoramaImage' in pl:
+            obj.addProperty("App::PropertyFile", "PanoramaImage", "Texture",
+                            "The image of the panorama to show as environment texture").PanoramaImage = ''
+
+        if not 'SkyImage' in pl:
+            obj.addProperty("App::PropertyFile", "SkyImage", "Texture",
+                            "The image of the sky to show as environment texture").SkyImage = ''
+
+        if not 'GroundImage' in pl:
+            obj.addProperty("App::PropertyFile", "GroundImage", "Texture",
+                            "The image of the ground to show as environment texture").GroundImage = ''
+
     def execute(self, fp):
         pass
-    
+
+    def onDocumentRestored(self, obj):
+        self.setProperties(obj)
+
+
 class ViewProviderEnvironmentConfig():
     def __init__(self, vobj):
         vobj.Proxy = self
-    
+
     def attach(self, vobj):
         self.ViewObject = vobj
         self.Object = vobj.Object
 
         self.transformNode = coin.SoTransform()
-        
+
         self.coinNode = coin.SoSeparator()
         self.coinNode.addChild(self.transformNode)
 
@@ -71,18 +111,18 @@ class ViewProviderEnvironmentConfig():
         self.updateNodeVisibility()
 
         vobj.addDisplayMode(self.coinNode, "Standard")
-    
+
     def updateNodeVisibility(self):
         if noTexture(self.Object.PanoramaImage):
             removeNode(self.coinNode, self.panoramaNode)
         else:
             addNode(self.coinNode, self.panoramaNode)
-        
+
         if noTexture(self.Object.SkyImage):
             removeNode(self.coinNode, self.skyNode)
         else:
             addNode(self.coinNode, self.skyNode)
-        
+
         if noTexture(self.Object.GroundImage):
             removeNode(self.coinNode, self.groundNode)
         else:
@@ -103,15 +143,15 @@ class ViewProviderEnvironmentConfig():
 
         textureCoordinates = coin.SoTextureCoordinate2()
 
-        oneThird = 1/3
+        oneThird = 1 / 3
         twoThirds = 2 * oneThird
 
-        #left face
+        # left face
         textureCoordinates.point.set1Value(0, 0, 0)
         textureCoordinates.point.set1Value(1, oneThird, 0)
         textureCoordinates.point.set1Value(2, oneThird, 1)
         textureCoordinates.point.set1Value(3, 0, 1)
-        
+
         textureCoordinates.point.set1Value(4, oneThird, 0)
         textureCoordinates.point.set1Value(5, twoThirds, 0)
         textureCoordinates.point.set1Value(6, twoThirds, 1)
@@ -123,7 +163,8 @@ class ViewProviderEnvironmentConfig():
         textureCoordinates.point.set1Value(11, twoThirds, 1)
 
         self.panoramaTexture = coin.SoTexture2()
-        self.panoramaTexture.filename = py2_utils.textureFileString(self.Object.PanoramaImage)
+        self.panoramaTexture.filename = py2_utils.textureFileString(
+            self.Object.PanoramaImage)
         self.panoramaTexture.model = coin.SoMultiTextureImageElement.REPLACE
 
         faceset = coin.SoFaceSet()
@@ -137,14 +178,15 @@ class ViewProviderEnvironmentConfig():
         panoramaNode.addChild(faceset)
 
         return panoramaNode
-    
+
     def setupSkyNode(self):
         skyNode = coin.SoSeparator()
 
         self.skyCoordinates = coin.SoCoordinate3()
 
         self.skyTexture = coin.SoTexture2()
-        self.skyTexture.filename = py2_utils.textureFileString(self.Object.SkyImage)
+        self.skyTexture.filename = py2_utils.textureFileString(
+            self.Object.SkyImage)
         self.skyTexture.model = coin.SoMultiTextureImageElement.REPLACE
 
         self.skyTextureCoordinates = coin.SoTextureCoordinate2()
@@ -163,14 +205,15 @@ class ViewProviderEnvironmentConfig():
         skyNode.addChild(faceset)
 
         return skyNode
-    
+
     def setupGroundNode(self):
         groundNode = coin.SoSeparator()
 
         self.groundCoordinates = coin.SoCoordinate3()
 
         self.groundTexture = coin.SoTexture2()
-        self.groundTexture.filename = py2_utils.textureFileString(self.Object.GroundImage)
+        self.groundTexture.filename = py2_utils.textureFileString(
+            self.Object.GroundImage)
         self.groundTexture.model = coin.SoMultiTextureImageElement.REPLACE
 
         groundTextureCoordinates = coin.SoTextureCoordinate2()
@@ -190,7 +233,7 @@ class ViewProviderEnvironmentConfig():
         return groundNode
 
     def calculateCoordinateBounds(self, radius, length):
-        lengthThirds = length / 3 # the panorama consists of 3 planes
+        lengthThirds = length / 3  # the panorama consists of 3 planes
 
         alpha = self.calculateAlpha(radius, lengthThirds)
         connectionPointX = math.sin(alpha) * radius
@@ -199,7 +242,7 @@ class ViewProviderEnvironmentConfig():
         leftX = -connectionPointX
         middleX = -connectionPointY
         rightX = middleX + lengthThirds
-        
+
         backY = connectionPointX
         middleY = connectionPointY
         frontY = middleY - lengthThirds
@@ -213,7 +256,8 @@ class ViewProviderEnvironmentConfig():
 
         panoramaCoordinates = self.panoramaCoordinates
 
-        leftX, middleX, rightX, backY, middleY, frontY = self.calculateCoordinateBounds(radius, length)
+        leftX, middleX, rightX, backY, middleY, frontY = self.calculateCoordinateBounds(
+            radius, length)
 
         # left face of panorama
         panoramaCoordinates.point.set1Value(0, leftX, frontY, 0)
@@ -232,17 +276,18 @@ class ViewProviderEnvironmentConfig():
         panoramaCoordinates.point.set1Value(9, rightX, backY, 0)
         panoramaCoordinates.point.set1Value(10, rightX, backY, height)
         panoramaCoordinates.point.set1Value(11, middleX, backY, height)
-    
+
     def updateSkyCoordinates(self):
         radius = self.Object.Radius.Value
         length = self.Object.Length.Value
         height = self.Object.Height.Value
         skyOverlap = self.Object.SkyOverlap.Value
-        skyOffset = 1000 # sky is 1 meter behind the panorama
+        skyOffset = 1000  # sky is 1 meter behind the panorama
 
         skyCoordinates = self.skyCoordinates
 
-        leftX, middleX, rightX, backY, middleY, frontY = self.calculateCoordinateBounds(radius + skyOffset, length + skyOffset)
+        leftX, middleX, rightX, backY, middleY, frontY = self.calculateCoordinateBounds(
+            radius + skyOffset, length + skyOffset)
 
         alpha = math.radians(45)
         a = leftX if leftX >= 0 else leftX * -1
@@ -251,7 +296,7 @@ class ViewProviderEnvironmentConfig():
         topZ = height + topZOffset
 
         self.fullSkyLength = skyOverlap + c
-        
+
         # left face of sky
         skyCoordinates.point.set1Value(0, leftX, frontY, height - skyOverlap)
         skyCoordinates.point.set1Value(1, leftX, middleY, height - skyOverlap)
@@ -288,14 +333,15 @@ class ViewProviderEnvironmentConfig():
         skyCoordinates.point.set1Value(22, 0, 0, topZ)
 
         self.updateSkyTextureCoordinates()
-    
+
     def updateGroundCoordinates(self):
         radius = self.Object.Radius.Value
         length = self.Object.Length.Value
 
         groundCoordinates = self.groundCoordinates
 
-        leftX, middleX, rightX, backY, middleY, frontY = self.calculateCoordinateBounds(radius, length)
+        leftX, middleX, rightX, backY, middleY, frontY = self.calculateCoordinateBounds(
+            radius, length)
 
         groundCoordinates.point.set1Value(0, leftX, frontY, 0)
         groundCoordinates.point.set1Value(1, rightX, frontY, 0)
@@ -314,57 +360,65 @@ class ViewProviderEnvironmentConfig():
     def updateSkyTextureCoordinates(self):
         textureOverlapRatio = self.calculateSkyOverlapRatio()
 
-        oneThird = 1/3
+        oneThird = 1 / 3
         twoThirds = oneThird * 2
 
         # left face
         self.skyTextureCoordinates.point.set1Value(0, 0, 0)
         self.skyTextureCoordinates.point.set1Value(1, oneThird, 0)
-        self.skyTextureCoordinates.point.set1Value(2, oneThird, textureOverlapRatio)
+        self.skyTextureCoordinates.point.set1Value(
+            2, oneThird, textureOverlapRatio)
         self.skyTextureCoordinates.point.set1Value(3, 0, textureOverlapRatio)
 
         # middle face
         self.skyTextureCoordinates.point.set1Value(4, oneThird, 0)
         self.skyTextureCoordinates.point.set1Value(5, twoThirds, 0)
-        self.skyTextureCoordinates.point.set1Value(6, twoThirds, textureOverlapRatio)
-        self.skyTextureCoordinates.point.set1Value(7, oneThird, textureOverlapRatio)
+        self.skyTextureCoordinates.point.set1Value(
+            6, twoThirds, textureOverlapRatio)
+        self.skyTextureCoordinates.point.set1Value(
+            7, oneThird, textureOverlapRatio)
 
         # back face
         self.skyTextureCoordinates.point.set1Value(8, twoThirds, 0)
         self.skyTextureCoordinates.point.set1Value(9, 1, 0)
         self.skyTextureCoordinates.point.set1Value(10, 1, textureOverlapRatio)
-        self.skyTextureCoordinates.point.set1Value(11, twoThirds, textureOverlapRatio)
+        self.skyTextureCoordinates.point.set1Value(
+            11, twoThirds, textureOverlapRatio)
 
         # left top face
         self.skyTextureCoordinates.point.set1Value(12, 0, textureOverlapRatio)
-        self.skyTextureCoordinates.point.set1Value(13, oneThird, textureOverlapRatio)
+        self.skyTextureCoordinates.point.set1Value(
+            13, oneThird, textureOverlapRatio)
         self.skyTextureCoordinates.point.set1Value(14, 0.5, 1)
         self.skyTextureCoordinates.point.set1Value(15, 0, 1)
 
         # middle top face
-        self.skyTextureCoordinates.point.set1Value(16, oneThird, textureOverlapRatio)
-        self.skyTextureCoordinates.point.set1Value(17, twoThirds, textureOverlapRatio)
+        self.skyTextureCoordinates.point.set1Value(
+            16, oneThird, textureOverlapRatio)
+        self.skyTextureCoordinates.point.set1Value(
+            17, twoThirds, textureOverlapRatio)
         self.skyTextureCoordinates.point.set1Value(18, 0.5, 1)
 
         # # back top face
-        self.skyTextureCoordinates.point.set1Value(19, twoThirds, textureOverlapRatio)
+        self.skyTextureCoordinates.point.set1Value(
+            19, twoThirds, textureOverlapRatio)
         self.skyTextureCoordinates.point.set1Value(20, 1, textureOverlapRatio)
         self.skyTextureCoordinates.point.set1Value(21, 1, 1)
         self.skyTextureCoordinates.point.set1Value(22, 0.5, 1)
-    
+
     def calculateSkyOverlapRatio(self):
         if self.Object.SkyOverlap.Value == 0:
             return 0
-        
+
         return 1 / (self.fullSkyLength / self.Object.SkyOverlap.Value)
 
     def onChanged(self, vp, prop):
         pass
-    
+
     def doubleClicked(self, vobj):
         pass
 
-    def getDisplayModes(self,obj):
+    def getDisplayModes(self, obj):
         return ["Standard"]
 
     def getDefaultDisplayMode(self):
@@ -380,27 +434,33 @@ class ViewProviderEnvironmentConfig():
         elif prop in TRANSFORM_PARAMETERS:
             self.updateTransformNode()
         elif prop == 'PanoramaImage':
-            self.panoramaTexture.filename = py2_utils.textureFileString(self.Object.PanoramaImage)
+            self.panoramaTexture.filename = py2_utils.textureFileString(
+                self.Object.PanoramaImage)
             self.updateNodeVisibility()
         elif prop == 'SkyImage':
-            self.skyTexture.filename = py2_utils.textureFileString(self.Object.SkyImage)
+            self.skyTexture.filename = py2_utils.textureFileString(
+                self.Object.SkyImage)
             self.updateNodeVisibility()
         elif prop == 'GroundImage':
-            self.groundTexture.filename = py2_utils.textureFileString(self.Object.GroundImage)
+            self.groundTexture.filename = py2_utils.textureFileString(
+                self.Object.GroundImage)
             self.updateNodeVisibility()
-    
+
     def __getstate__(self):
         return None
 
-    def __setstate__(self,state):
+    def __setstate__(self, state):
         return None
 
+
 def createEnvironmentConfig():
-    environmentConfigObject = FreeCAD.ActiveDocument.addObject("App::FeaturePython", "EnvironmentConfig")
+    environmentConfigObject = FreeCAD.ActiveDocument.addObject(
+        "App::FeaturePython", "EnvironmentConfig")
     environmentConfig = EnvironmentConfig(environmentConfigObject)
     ViewProviderEnvironmentConfig(environmentConfigObject.ViewObject)
 
     return environmentConfigObject
+
 
 if __name__ == "__main__":
     environmentConfigObject = createEnvironmentConfig()
