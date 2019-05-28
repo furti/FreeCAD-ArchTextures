@@ -8,6 +8,9 @@ GEOMETRY_COORDINATES = ['Radius', 'Length', 'Height']
 TRANSFORM_PARAMETERS = ['ZOffset', 'Rotation']
 ROTATION_VECTOR = coin.SbVec3f(0, 0, -1)
 
+PANORAMA_TYPE_THIRDS = 'Thirds'
+PANORAMA_TYPE_360 = '360'
+
 
 def noTexture(image):
     if image is None or image == '':
@@ -46,35 +49,33 @@ class EnvironmentConfig():
         if not 'Radius' in pl:
             obj.addProperty("App::PropertyLength", "Radius", "Geometry",
                             "The Distance from the center of the coordinate system to the environment textures").Radius = 50000
-
         if not 'Length' in pl:
             obj.addProperty("App::PropertyLength", "Length", "Geometry",
                             "The overall Length of the environment panorama texture").Length = 150000
-
         if not 'Height' in pl:
             obj.addProperty("App::PropertyLength", "Height", "Geometry",
                             "The overall Height of the environment panorama texture").Height = 50000
-
         if not 'SkyOverlap' in pl:
             obj.addProperty("App::PropertyLength", "SkyOverlap", "Geometry",
                             "The distance the sky overlaps with the panorama texture").SkyOverlap = 25000
-
         if not 'Rotation' in pl:
             obj.addProperty("App::PropertyAngle", "Rotation", "Geometry",
                             "The rotation for the environment").Rotation = 0
-
         if not 'ZOffset' in pl:
             obj.addProperty("App::PropertyDistance", "ZOffset", "Geometry",
                             "The offset of the environment on the Z-Axis").ZOffset = -1
-
         if not 'PanoramaImage' in pl:
             obj.addProperty("App::PropertyFile", "PanoramaImage", "Texture",
                             "The image of the panorama to show as environment texture").PanoramaImage = ''
+        if not 'PanoramaType' in pl:
+            obj.addProperty("App::PropertyEnumeration", "PanoramaType",
+                            "Geometry", "The type of panorama to display")
+            obj.PanoramaType = [PANORAMA_TYPE_THIRDS, PANORAMA_TYPE_360]
+            obj.PanoramaType = PANORAMA_TYPE_THIRDS
 
         if not 'SkyImage' in pl:
             obj.addProperty("App::PropertyFile", "SkyImage", "Texture",
                             "The image of the sky to show as environment texture").SkyImage = ''
-
         if not 'GroundImage' in pl:
             obj.addProperty("App::PropertyFile", "GroundImage", "Texture",
                             "The image of the ground to show as environment texture").GroundImage = ''
@@ -104,6 +105,7 @@ class ViewProviderEnvironmentConfig():
         self.groundNode = self.setupGroundNode()
 
         self.updatePanoramaCoordinates()
+        self.updatePanoramaTextureCoordinates()
         self.updateSkyCoordinates()
         self.updateGroundCoordinates()
 
@@ -141,26 +143,7 @@ class ViewProviderEnvironmentConfig():
 
         self.panoramaCoordinates = coin.SoCoordinate3()
 
-        textureCoordinates = coin.SoTextureCoordinate2()
-
-        oneThird = 1 / 3
-        twoThirds = 2 * oneThird
-
-        # left face
-        textureCoordinates.point.set1Value(0, 0, 0)
-        textureCoordinates.point.set1Value(1, oneThird, 0)
-        textureCoordinates.point.set1Value(2, oneThird, 1)
-        textureCoordinates.point.set1Value(3, 0, 1)
-
-        textureCoordinates.point.set1Value(4, oneThird, 0)
-        textureCoordinates.point.set1Value(5, twoThirds, 0)
-        textureCoordinates.point.set1Value(6, twoThirds, 1)
-        textureCoordinates.point.set1Value(7, oneThird, 1)
-
-        textureCoordinates.point.set1Value(8, twoThirds, 0)
-        textureCoordinates.point.set1Value(9, 1, 0)
-        textureCoordinates.point.set1Value(10, 1, 1)
-        textureCoordinates.point.set1Value(11, twoThirds, 1)
+        self.panoramaTextureCoordinates = coin.SoTextureCoordinate2()
 
         self.panoramaTexture = coin.SoTexture2()
         self.panoramaTexture.filename = py2_utils.textureFileString(
@@ -173,7 +156,7 @@ class ViewProviderEnvironmentConfig():
         faceset.numVertices.set1Value(2, 4)
 
         panoramaNode.addChild(self.panoramaCoordinates)
-        panoramaNode.addChild(textureCoordinates)
+        panoramaNode.addChild(self.panoramaTextureCoordinates)
         panoramaNode.addChild(self.panoramaTexture)
         panoramaNode.addChild(faceset)
 
@@ -276,6 +259,79 @@ class ViewProviderEnvironmentConfig():
         panoramaCoordinates.point.set1Value(9, rightX, backY, 0)
         panoramaCoordinates.point.set1Value(10, rightX, backY, height)
         panoramaCoordinates.point.set1Value(11, middleX, backY, height)
+
+    def updatePanoramaTextureCoordinates(self):
+        panoramaType = self.Object.PanoramaType
+
+        if panoramaType == PANORAMA_TYPE_THIRDS:
+            self.updateThirdsPanoramaTextureCoordinates()
+        elif panoramaType == PANORAMA_TYPE_360:
+            self.update360PanoramaTextureCoordinates()
+        else:
+            raise ValueError('Unkown panorama type ' + panoramaType)
+
+    def update360PanoramaTextureCoordinates(self):
+        # we display 90 degrees of the full panorama on our geometry
+        # Full image has 360 degress
+        # So this is 1 / 4 of the full image
+        # The geometry consists of 3 equally sized planes
+        # So each plane gets a third of the partial image
+        oneFourth = 1 / 4
+        thirds = oneFourth / 3
+        twoThirds = 2 * thirds
+        rotation = self.Object.Rotation.Value
+
+        if rotation >= 0:
+            rotation = rotation - 360
+
+        rotation = rotation * -1
+
+        print(rotation)
+
+        start = 1 - (rotation / 360) - oneFourth
+        second = start + thirds
+        third = start + twoThirds
+        end = start + oneFourth
+
+        print(end)
+
+        # left face
+        self.panoramaTextureCoordinates.point.set1Value(0, start, 0)
+        self.panoramaTextureCoordinates.point.set1Value(1, second, 0)
+        self.panoramaTextureCoordinates.point.set1Value(2, second, 1)
+        self.panoramaTextureCoordinates.point.set1Value(3, start, 1)
+
+        # middle face
+        self.panoramaTextureCoordinates.point.set1Value(4, second, 0)
+        self.panoramaTextureCoordinates.point.set1Value(5, third, 0)
+        self.panoramaTextureCoordinates.point.set1Value(6, third, 1)
+        self.panoramaTextureCoordinates.point.set1Value(7, second, 1)
+
+        # right face
+        self.panoramaTextureCoordinates.point.set1Value(8, third, 0)
+        self.panoramaTextureCoordinates.point.set1Value(9, end, 0)
+        self.panoramaTextureCoordinates.point.set1Value(10, end, 1)
+        self.panoramaTextureCoordinates.point.set1Value(11, third, 1)
+
+    def updateThirdsPanoramaTextureCoordinates(self):
+        oneThird = 1 / 3
+        twoThirds = 2 * oneThird
+
+        # left face
+        self.panoramaTextureCoordinates.point.set1Value(0, 0, 0)
+        self.panoramaTextureCoordinates.point.set1Value(1, oneThird, 0)
+        self.panoramaTextureCoordinates.point.set1Value(2, oneThird, 1)
+        self.panoramaTextureCoordinates.point.set1Value(3, 0, 1)
+
+        self.panoramaTextureCoordinates.point.set1Value(4, oneThird, 0)
+        self.panoramaTextureCoordinates.point.set1Value(5, twoThirds, 0)
+        self.panoramaTextureCoordinates.point.set1Value(6, twoThirds, 1)
+        self.panoramaTextureCoordinates.point.set1Value(7, oneThird, 1)
+
+        self.panoramaTextureCoordinates.point.set1Value(8, twoThirds, 0)
+        self.panoramaTextureCoordinates.point.set1Value(9, 1, 0)
+        self.panoramaTextureCoordinates.point.set1Value(10, 1, 1)
+        self.panoramaTextureCoordinates.point.set1Value(11, twoThirds, 1)
 
     def updateSkyCoordinates(self):
         radius = self.Object.Radius.Value
@@ -431,8 +487,11 @@ class ViewProviderEnvironmentConfig():
             self.updateGroundCoordinates()
         elif prop == 'SkyOverlap':
             self.updateSkyCoordinates()
+        elif prop == 'PanoramaType':
+            self.updatePanoramaTextureCoordinates()
         elif prop in TRANSFORM_PARAMETERS:
             self.updateTransformNode()
+            self.updatePanoramaTextureCoordinates()
         elif prop == 'PanoramaImage':
             self.panoramaTexture.filename = py2_utils.textureFileString(
                 self.Object.PanoramaImage)
@@ -463,8 +522,23 @@ def createEnvironmentConfig():
 
 
 if __name__ == "__main__":
-    environmentConfigObject = createEnvironmentConfig()
 
-    environmentConfigObject.PanoramaImage = 'C:/Meine Daten/freecad/workbenches/FreeCAD-ArchTextures/textures/panorama/Panorama_wood_transparency.png'
-    environmentConfigObject.SkyImage = 'C:/Meine Daten/freecad/workbenches/FreeCAD-ArchTextures/textures/panorama/sky.jpg'
-    environmentConfigObject.GroundImage = 'C:/Meine Daten/freecad/workbenches/FreeCAD-ArchTextures/textures/panorama/grass.jpg'
+    def createThirdsPanorama():
+        environmentConfigObject = createEnvironmentConfig()
+        environmentConfigObject.PanoramaImage = 'C:/Meine Daten/freecad/workbenches/FreeCAD-ArchTextures/textures/panorama/Panorama_wood_transparency.png'
+        environmentConfigObject.SkyImage = 'C:/Meine Daten/freecad/workbenches/FreeCAD-ArchTextures/textures/panorama/sky.jpg'
+        environmentConfigObject.GroundImage = 'C:/Meine Daten/freecad/workbenches/FreeCAD-ArchTextures/textures/panorama/grass.jpg'
+
+    def create360Panorama():
+        environmentConfigObject = createEnvironmentConfig()
+        environmentConfigObject.PanoramaImage = 'C:/Meine Daten/Hausbau/Pierbach/Zäune/Texturen/360_Panorama.jpg'
+        environmentConfigObject.SkyImage = 'C:/Meine Daten/freecad/workbenches/FreeCAD-ArchTextures/textures/panorama/sky.jpg'
+        environmentConfigObject.GroundImage = 'C:/Meine Daten/freecad/workbenches/FreeCAD-ArchTextures/textures/panorama/grass.jpg'
+        environmentConfigObject.PanoramaType = PANORAMA_TYPE_360
+        environmentConfigObject.SkyOverlap = 5000
+        environmentConfigObject.Height = 10000
+        environmentConfigObject.Length = 60000
+        environmentConfigObject.Radius = 30000
+
+    # createThirdsPanorama()
+    create360Panorama()

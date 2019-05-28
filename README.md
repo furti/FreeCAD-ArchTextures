@@ -99,8 +99,6 @@ With the right config you can enhance your screenshots a lot and get something l
 Read more...
     </summary>
 
-**Attention** Does currently not work with Python 2 Builds of FreeCAD (https://github.com/furti/FreeCAD-ArchTextures/issues/21)
-
 To create a new EnvironmentConfig you click the "Create EnvironmentConfig" command.
 
 ![Create EnvironmentConfig](./Resources/Icons/CreateEnvironmentConfig.svg)
@@ -120,10 +118,12 @@ This image is displayed behind your geometry. You can define the length and heig
 ### Sky Image
 This is the image that is displayed above the panorama image as the sky. The length is the same as for the panorama Image. The height is calculated according to the sky overlap, radius and length properties.
 
-To understand the geometry properties a bit better we can look at this image
-![Settings](./Resources/Documentation/Panorama_Geometry_Overview.png)
+### Panorama Type
+The type of panorama image used.
+ - ```Thirds```: The full image will be distributed evenly accross the three planes
+ - ```360```: The image will be treated as 360 degrees panorama
 
-The green line is the panorama texture seen from top view.
+See ```Texture Mapping Details``` for more details.
 
 ### Length
 Defines the Length of this line.
@@ -146,6 +146,13 @@ The image above displays the default placement of the environment textures. The 
 This property can be used to move the environment up and down the Z-Axis. This is useful to have the ground plane displayed below your geometry.
 By default this property is set to -1mm so that it is below all geometry on the origin plane.
 
+### Texture Mapping Details
+To understand the geometry properties a bit better we can look at this image
+![Settings](./Resources/Documentation/Panorama_Geometry_Overview.png)
+
+The green line is the panorama texture seen from top view.
+When ```PanoramaType``` is set to ```Thirds``` the full image
+will be distributed evenly across the three planes. When ```PanoramaType``` is set to ```360``` you can imagine the full image be mapped to the blue circle. And only the part that maps to the green planes is displayed. So when you rotate the environment config the visible panorama also changes.
 </details>
 
 ## Technical details
