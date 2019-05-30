@@ -276,9 +276,9 @@ class ViewProviderEnvironmentConfig():
         # So this is 1 / 4 of the full image
         # The geometry consists of 3 equally sized planes
         # So each plane gets a third of the partial image
-        oneFourth = 1 / 4
-        thirds = oneFourth / 3
-        twoThirds = 2 * thirds
+        radius = self.Object.Radius.Value
+        length = self.Object.Length.Value
+
         rotation = self.Object.Rotation.Value
 
         if rotation >= 0:
@@ -286,22 +286,43 @@ class ViewProviderEnvironmentConfig():
 
         rotation = rotation * -1
 
-        print(rotation)
+        leftX, middleX, rightX, backY, middleY, frontY = self.calculateCoordinateBounds(
+            radius, length)
 
-        start = 1 - (rotation / 360) - oneFourth
-        second = start + thirds
-        third = start + twoThirds
-        end = start + oneFourth
+        singlePlaneLength = length / 3
 
-        print(end)
+        displayAmount = 1 / 4
 
-        # left face
+        if rightX > 0:
+            # One fourth of the panorama image should be displayed between the axis
+            # to the right and bottom we overshoot by rightX so subtract this
+            oneFourthOfImageLength = length - rightX * 2
+            overshootRatio = rightX / oneFourthOfImageLength
+
+            # The length of the partial plane that is between the middle plane and the axis
+            shortPlaneLength = middleX * -1
+
+            # Ratios of the middle plane and the short planes between the axis
+            middlePlaneRatio = singlePlaneLength / oneFourthOfImageLength * displayAmount
+            shortPlaneRatio = shortPlaneLength / oneFourthOfImageLength * displayAmount
+
+            # Ratio of the panorama outside of the axis
+            displayAmountOvershootRatio = overshootRatio * displayAmount
+
+            displayAmount += displayAmountOvershootRatio
+
+        start = 0 - displayAmount - (rotation / 360)
+        second = start + displayAmountOvershootRatio + shortPlaneRatio
+        third = second + middlePlaneRatio
+        end = third + displayAmountOvershootRatio + shortPlaneRatio
+
+        # # left face
         self.panoramaTextureCoordinates.point.set1Value(0, start, 0)
         self.panoramaTextureCoordinates.point.set1Value(1, second, 0)
         self.panoramaTextureCoordinates.point.set1Value(2, second, 1)
         self.panoramaTextureCoordinates.point.set1Value(3, start, 1)
 
-        # middle face
+        # # middle face
         self.panoramaTextureCoordinates.point.set1Value(4, second, 0)
         self.panoramaTextureCoordinates.point.set1Value(5, third, 0)
         self.panoramaTextureCoordinates.point.set1Value(6, third, 1)
@@ -485,6 +506,7 @@ class ViewProviderEnvironmentConfig():
             self.updatePanoramaCoordinates()
             self.updateSkyCoordinates()
             self.updateGroundCoordinates()
+            self.updatePanoramaTextureCoordinates()
         elif prop == 'SkyOverlap':
             self.updateSkyCoordinates()
         elif prop == 'PanoramaType':
@@ -531,7 +553,7 @@ if __name__ == "__main__":
 
     def create360Panorama():
         environmentConfigObject = createEnvironmentConfig()
-        environmentConfigObject.PanoramaImage = 'C:/Meine Daten/Hausbau/Pierbach/Zäune/Texturen/360_Panorama.jpg'
+        environmentConfigObject.PanoramaImage = 'C:/Meine Daten/freecad/workbenches/FreeCAD-ArchTextures/textures/360/360.png'
         environmentConfigObject.SkyImage = 'C:/Meine Daten/freecad/workbenches/FreeCAD-ArchTextures/textures/panorama/sky.jpg'
         environmentConfigObject.GroundImage = 'C:/Meine Daten/freecad/workbenches/FreeCAD-ArchTextures/textures/panorama/grass.jpg'
         environmentConfigObject.PanoramaType = PANORAMA_TYPE_360
