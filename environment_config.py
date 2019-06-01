@@ -271,13 +271,9 @@ class ViewProviderEnvironmentConfig():
             raise ValueError('Unkown panorama type ' + panoramaType)
 
     def update360PanoramaTextureCoordinates(self):
-        # we display 90 degrees of the full panorama on our geometry
-        # Full image has 360 degress
-        # So this is 1 / 4 of the full image
-        # The geometry consists of 3 equally sized planes
-        # So each plane gets a third of the partial image
         radius = self.Object.Radius.Value
         length = self.Object.Length.Value
+        singlePlaneLength = length / 3
 
         rotation = self.Object.Rotation.Value
 
@@ -289,11 +285,22 @@ class ViewProviderEnvironmentConfig():
         leftX, middleX, rightX, backY, middleY, frontY = self.calculateCoordinateBounds(
             radius, length)
 
-        singlePlaneLength = length / 3
-
         displayAmount = 1 / 4
+        # We want to display 1/4 of the panorama between negative x and positive y axis
+        # So that north of panorama is positive y, south is negative y, east is positive x and west is negative x
+        #
+        # Default case is that the geometry start of geometry is exactly at the x asis and end is
+        # exactly at the y axis
+        # Then exactly 1 / 4 of the image is shown and every plane has 1 / 3 of the visilbe image
+
+        startOffset = displayAmount
+        secondOffset = displayAmount / 3
+        thirdOffset = secondOffset
+        endOffset = secondOffset
 
         if rightX > 0:
+            # When the geometry overshoots the axis we have to display more of the image, so that the
+            # north, south, east and west are still touching the axis
             # One fourth of the panorama image should be displayed between the axis
             # to the right and bottom we overshoot by rightX so subtract this
             oneFourthOfImageLength = length - rightX * 2
@@ -309,12 +316,35 @@ class ViewProviderEnvironmentConfig():
             # Ratio of the panorama outside of the axis
             displayAmountOvershootRatio = overshootRatio * displayAmount
 
-            displayAmount += displayAmountOvershootRatio
+            startOffset = displayAmount + displayAmountOvershootRatio
+            secondOffset = displayAmountOvershootRatio + shortPlaneRatio
+            thirdOffset = middlePlaneRatio
+            endOffset = secondOffset
+        elif rightX < 0:
+            # When the geometry does not touch the axis we have to display less of the image, so that the
+            # north, south, east and west are still touching the axis
+            # One fourth of the panorama image should be displayed between the axis
+            # but we don't touch the axis so we have to add the missing bits
+            oneFourthOfImageLength = length + rightX * -2
 
-        start = 0 - displayAmount - (rotation / 360)
-        second = start + displayAmountOvershootRatio + shortPlaneRatio
-        third = second + middlePlaneRatio
-        end = third + displayAmountOvershootRatio + shortPlaneRatio
+            # as rightX is negative multiply with -1
+            # overshootRatio = rightX / oneFourthOfImageLength * -1
+
+            realDisplayAmount = (displayAmount * length) / \
+                oneFourthOfImageLength
+            realThirds = realDisplayAmount / 3
+            missingRatio = (displayAmount - realDisplayAmount) / 2
+
+            # We display less of the image at once. overshoot ratio is negative so this works
+            startOffset = missingRatio + realDisplayAmount
+            secondOffset = realThirds
+            thirdOffset = realThirds
+            endOffset = realThirds - missingRatio
+
+        start = 0 - startOffset - (rotation / 360)
+        second = start + secondOffset
+        third = second + thirdOffset
+        end = third + endOffset
 
         # # left face
         self.panoramaTextureCoordinates.point.set1Value(0, start, 0)
@@ -559,7 +589,7 @@ if __name__ == "__main__":
         environmentConfigObject.PanoramaType = PANORAMA_TYPE_360
         environmentConfigObject.SkyOverlap = 5000
         environmentConfigObject.Height = 10000
-        environmentConfigObject.Length = 60000
+        environmentConfigObject.Length = 45000
         environmentConfigObject.Radius = 30000
 
     # createThirdsPanorama()
