@@ -109,11 +109,21 @@ You might notice, that event though the object is visible, nothing is shown in t
 
 ![Settings](./Resources/Documentation/Environment_Config.png)
 
+To understand the geometry properties a bit better take a look at this picture
+
+![Environemnt_Overview](./Resources/Documentation/Panorama_Geometry_Overview.png)
+
+The green line is the geometry that displays the panorama image, as seen from top view.
+
+When ```PanoramaType``` is set to ```Thirds``` the full image will be distributed evenly across the three planes. 
+
+When ```PanoramaType``` is set to ```360``` you can imagine the full image to be mapped to the blue circle. And only the part that maps to the green planes is displayed. So when you rotate the environment config the visible panorama also changes. The beginning of the image is considered "North" and is always fixed to the positive Y axis.
+
 ### Ground Image
 This is the image that should be displayed on the ground plane. This should be a quadratic image as the ground plane is also quadratic. The size of the ground plane is calculated according to the radius and length properties.
 
 ### Panorama Image
-This image is displayed behind your geometry. You can define the length and height of this plane with the properties of the same name.
+This image is displayed on the green line in the above picture. You can define the length and height of this plane with the properties of the same name.
 
 ### Sky Image
 This is the image that is displayed above the panorama image as the sky. The length is the same as for the panorama Image. The height is calculated according to the sky overlap, radius and length properties.
@@ -123,16 +133,16 @@ The type of panorama image used.
  - ```Thirds```: The full image will be distributed evenly accross the three planes
  - ```360```: The image will be treated as 360 degrees panorama
 
-See ```Texture Mapping Details``` for more details.
+See the introduction for more details.
 
 ### Length
-Defines the Length of this line.
+Defines the Length of the plane that shows the panorama image. The plane consists of three evenly sized faces.
 
 ### Height
-Defines the height of the resulting plane.
+Defines the height of the plane that shows the panorama image.
 
 ### Radius
-This is the radius of the blue circle. Basically this defines the distance from the origin to the panorama image plane.
+This is the radius of the blue circle in the picture above. Basically this defines the distance from the origin to the panorama image plane.
 
 ### Sky Overlap
 The Sky plane is positioned similar to the panorama plane. It is offset from the panorama plane by 1 meter (The blue circle will have Radius + 1m) and continues above the panorama plane in a 45 degree angle to the origin.
@@ -146,13 +156,6 @@ The image above displays the default placement of the environment textures. The 
 This property can be used to move the environment up and down the Z-Axis. This is useful to have the ground plane displayed below your geometry.
 By default this property is set to -1mm so that it is below all geometry on the origin plane.
 
-### Texture Mapping Details
-To understand the geometry properties a bit better we can look at this image
-![Settings](./Resources/Documentation/Panorama_Geometry_Overview.png)
-
-The green line is the panorama texture seen from top view.
-When ```PanoramaType``` is set to ```Thirds``` the full image
-will be distributed evenly across the three planes. When ```PanoramaType``` is set to ```360``` you can imagine the full image be mapped to the blue circle. And only the part that maps to the green planes is displayed. So when you rotate the environment config the visible panorama also changes.
 </details>
 
 ## Technical details
