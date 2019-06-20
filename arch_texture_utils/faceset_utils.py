@@ -440,6 +440,18 @@ def findBrepFaceset(node):
     
     return None
 
+def findMaterial(node):
+    children = node.getChildren()
+
+    if children is None or children.getLength() == 0:
+        return None
+    
+    for child in children:
+        if child.getTypeId().getName() == 'Material':
+            return child
+    
+    return None
+
 def buildFaceCoordinates(brep):
     triangles = []
     faces = []
