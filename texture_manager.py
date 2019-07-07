@@ -36,6 +36,7 @@ class TextureManager():
                 'materials': {
                     #     '<mat_name>': {
                     #         'file': 'path_to_texture',
+                    #         'bumpMap': 'path_to_texture',
                     #         'realSize': None | {
                     #              's': <length_in_mm>,
                     #              't': <height_in_mm>
@@ -61,8 +62,12 @@ class TextureManager():
             # '<file_name>': texture
         }
 
+        self.bumpMapCache = {
+            # '<file_name>': bumpmap
+        }
+
         self.texturedObjects = [
-            #(object, shadedNode, (texture, transform), (material, originalDiffuseColor))
+            #(object, shadedNode, (textureUnit, texture, transform), (material, originalDiffuseColor))
         ]
 
     def export(self, fileObject):
@@ -87,11 +92,14 @@ class TextureManager():
 
         for o in FreeCAD.ActiveDocument.Objects:
             if self.isTexturable(o):
-                texture, textureConfig = self.getTextureForMaterial(o.Material)
+                # Test Script for bump mapping is here: https://forum.freecadweb.org/viewtopic.php?f=10&t=37255&p=319329#p319329
+                texture, bumpMap, textureConfig = self.getTextureForMaterial(
+                    o.Material)
 
                 if texture is not None:
                     print('Texturing %s' % (o.Label,))
 
+                    textureUnit = None
                     rootnode = o.ViewObject.RootNode
                     switch = faceset_utils.findSwitch(rootnode)
                     shadedNode = faceset_utils.findShadedNode(switch)
@@ -116,8 +124,21 @@ class TextureManager():
                     shadedNode.insertChild(texture, 1)
                     shadedNode.insertChild(textureCoords, 1)
 
+                    # Only add the texture unit when the bump map is set
+                    # Otherwise the default is OK
+                    if bumpMap is not None:
+                        textureUnit = coin.SoTextureUnit()
+                        textureUnit.unit.setValue(1)
+                        shadedNode.insertChild(textureUnit, 1)
+
+                    if bumpMap is not None:
+                        # Bump map coordinates do not work, we have to use texture coordinates
+                        # Skipping the coordinates also ends in an access violation
+                        shadedNode.insertChild(textureCoords, 1)
+                        shadedNode.insertChild(bumpMap, 1)
+
                     self.texturedObjects.append(
-                        (o, shadedNode, (texture, textureCoords), (material, originalDiffuseColor)))
+                        (o, shadedNode, (textureUnit, texture, textureCoords, bumpMap), (material, originalDiffuseColor)))
 
     def updateMaterialColors(self, material):
         originalDiffuseColor = coin.SoMFColor()
@@ -143,13 +164,26 @@ class TextureManager():
         FreeCAD.Console.PrintMessage('Removing Textures\n')
 
         for o, shadedNode, coinData, materialData in self.texturedObjects:
-            shadedNode.removeChild(coinData[0])
-            shadedNode.removeChild(coinData[1])
+            if coinData[0] is not None:
+                shadedNode.removeChild(coinData[0])
+
+            if coinData[1] is not None:
+                shadedNode.removeChild(coinData[1])
+
+            if coinData[2] is not None:
+                shadedNode.removeChild(coinData[2])
+            
+            if coinData[3] is not None:
+                shadedNode.removeChild(coinData[3])
+                # When a bump map is set, the texture coordinate is added twice. So remove it again
+                shadedNode.removeChild(coinData[2])
+
 
             material = materialData[0]
 
             material.diffuseColor.deleteValues(0)
-            material.diffuseColor.setValues(0, len(materialData[1]), materialData[1])
+            material.diffuseColor.setValues(
+                0, len(materialData[1]), materialData[1])
 
         self.texturedObjects = []
 
@@ -169,6 +203,12 @@ class TextureManager():
             materialConfig = self.textureData['materials'][materialName]
 
             imageFile = py2_utils.textureFileString(materialConfig['file'])
+            bumpMapFile = None
+            bumpMap = None
+
+            if 'bumpMap' in materialConfig:
+                bumpMapFile = py2_utils.textureFileString(
+                    materialConfig['bumpMap'])
 
             if imageFile not in self.textureCache:
                 tex = coin.SoTexture2()
@@ -176,9 +216,21 @@ class TextureManager():
 
                 self.textureCache[imageFile] = tex
 
-            return (self.textureCache[imageFile], materialConfig)
+            if bumpMapFile is not None:
+                if bumpMapFile not in self.bumpMapCache:
+                    bumpMap = coin.SoBumpMap()
 
-        return (None, None)
+                    bumpMap.filename.setValue(bumpMapFile)
+
+                    self.bumpMapCache[bumpMapFile] = bumpMap
+
+                bumpMap = self.bumpMapCache[bumpMapFile]
+
+            texture = self.textureCache[imageFile]
+
+            return (texture, bumpMap, materialConfig)
+
+        return (None, None, None)
 
 
 if __name__ == "__main__":
