@@ -1,9 +1,12 @@
 import FreeCAD, FreeCADGui
 
+ARCHTEXTUREWB_VERSION = 'V0.4'
+
 class ArchTextureWorkbench (FreeCADGui.Workbench):
     "Texture Architectural objects in FreeCAD"
+    global ARCHTEXTUREWB_VERSION
 
-    MenuText = "Arch Texture"
+    MenuText = 'Arch Texture '+ARCHTEXTUREWB_VERSION
     ToolTip = "Texture architectural objects"
 
     def __init__(self):
