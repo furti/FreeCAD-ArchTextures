@@ -5,62 +5,73 @@ from texture_manager import TextureManager
 from arch_texture_utils.resource_utils import uiPath
 from arch_texture_utils.qtutils import QComboBox, QTableWidgetItem, QDoubleSpinBox, userSelectedFile, IMAGE_FILES, showInfo
 
+from PySide2.QtWidgets import QGroupBox
+from PySide2.QtWidgets import QLineEdit
+from PySide2.QtWidgets import QPushButton
+from PySide2.QtWidgets import QFormLayout
+from PySide2.QtWidgets import QHBoxLayout
+from PySide2.QtWidgets import QWidget
+
+
 MAT_NAME_REGEX = re.compile(r'.* \((.*)\)')
 
-class TextureConfigTable():
-    def __init__(self, config, qtTable):
-        self.config = config
-        self.qtTable = qtTable
-
-        self.qtTable.itemDoubleClicked.connect(self.doubleClicked)
-
-        self.setupTable()
+def noneWhenEmpty(value):
+    if value == None or value.strip() == '':
+        return None
     
-    def setupTable(self):
-        for name, entryConfig in self.config.items():
-            self.addRow(name, entryConfig['file'], entryConfig['realSize'])
+    return value
 
-    def addRow(self, name=None, textureFile=None, realSize=None):
-        rowPosition = self.qtTable.rowCount()
-        self.qtTable.insertRow(rowPosition)
-
-        comboBox = self.materialBox(name)
-        fileEdit = self.fileInput(textureFile)
-        lengthEdit, heightEdit = self.sizeEdit(realSize)
-
-        self.qtTable.setCellWidget(rowPosition, 0, comboBox)
-        self.qtTable.setItem(rowPosition, 1, fileEdit)
-        self.qtTable.setCellWidget(rowPosition, 2, lengthEdit)
-        self.qtTable.setCellWidget(rowPosition, 3, heightEdit)
     
-    def removeRow(self):
-        selectionModel = self.qtTable.selectionModel()
+class MaterialConfigWidget(QGroupBox):
+    def __init__(self, panel, index, materialName, textureFile, bumpMapFile, realSize):
+        super().__init__()
 
-        if selectionModel.hasSelection():
-            for selection in selectionModel.selectedRows():
-                FreeCAD.Console.PrintMessage(selection.row())
-                self.qtTable.removeRow(selection.row())
+        self.panel = panel
+        self.index = index
+
+        self.materialBox = self.createMaterialBox(materialName)
+        self.textureFileEdit, self.textureFileWidget = self.createFileSelect(textureFile)
+        self.bumpMapFileEdit, self.bumpMapFileWidget = self.createFileSelect(bumpMapFile)
+        self.lengthEdit, self.heightEdit = self.createSizeEdit(realSize)
+        self.removeButton = QPushButton('Remove')
+
+        self.removeButton.clicked.connect(self.remove)
+
+        self.initUi()
+
+    def initUi(self):
+        self.layout = QFormLayout()
+
+        self.layout.addRow('Material', self.materialBox)
+        self.layout.addRow('Texture', self.textureFileWidget)
+        self.layout.addRow('BumpMap', self.bumpMapFileWidget)
+        self.layout.addRow('Length', self.lengthEdit)
+        self.layout.addRow('Height', self.heightEdit)
+        self.layout.addRow(' ', self.removeButton)
+
+        self.setLayout(self.layout)
+
+    def getMaterialName(self):
+        comboBox = self.materialBox
+
+        return MAT_NAME_REGEX.findall(comboBox.currentText())[0]
+
+    def getTextureFile(self):
+        return noneWhenEmpty(self.textureFileEdit.text())
+
+    def getBumpMapFile(self):
+        return noneWhenEmpty(self.bumpMapFileEdit.text())
+
+    def getLength(self):
+        return self.lengthEdit.value()
+
+    def getHeight(self):
+        return self.heightEdit.value()
+
+    def remove(self):
+        self.panel.removeRow(self)
     
-    def saveIntoConfig(self):
-        self.config.clear()
-
-        for row in range(self.qtTable.rowCount()):
-            comboBox = self.qtTable.cellWidget(row, 0)
-            fileBox = self.qtTable.item(row, 1)
-            lengthEdit = self.qtTable.cellWidget(row, 2)
-            heightEdit = self.qtTable.cellWidget(row, 3)
-
-            materialName = MAT_NAME_REGEX.findall(comboBox.currentText())[0]
-
-            self.config[materialName] = {
-                'file': fileBox.text(),
-                'realSize': {
-                    's': lengthEdit.value(),
-                    't': heightEdit.value()
-                }
-            }
-    
-    def materialBox(self, materialName=None):
+    def createMaterialBox(self, materialName=None):
         materialBox = QComboBox()
 
         materials = self.findMaterials()
@@ -80,12 +91,7 @@ class TextureConfigTable():
 
         return materialBox
     
-    def fileInput(self, file=None):
-        fileInput = QTableWidgetItem(file)
-
-        return fileInput
-    
-    def sizeEdit(self, realSize=None):
+    def createSizeEdit(self, realSize=None):
         lengthEdit = QDoubleSpinBox()
         heightEdit = QDoubleSpinBox()
 
@@ -106,33 +112,78 @@ class TextureConfigTable():
 
         return (lengthEdit, heightEdit)
     
-    def doubleClicked(self, item):
-        selectedFile = userSelectedFile('Select texture', IMAGE_FILES)
+    def createFileSelect(self, file):
+        edit = QLineEdit(file)
+        button = QPushButton('...')
+        button.setMaximumWidth(30)
 
-        if selectedFile is None or selectedFile == '':
-            return
-        
-        item.setText(selectedFile)
+        widget = QWidget()
+        layout = QHBoxLayout()
+
+        layout.addWidget(edit)
+        layout.addWidget(button)
+
+        widget.setLayout(layout)
+
+        button.clicked.connect(lambda: self.chooseFile(edit))
+
+
+        return (edit, widget)
     
     def findMaterials(self):
         materials = FreeCAD.ActiveDocument.findObjects('App::MaterialObjectPython')
 
         return ['%s (%s)' % (mat.Label, mat.Name) for mat in materials]
+    
+    def chooseFile(self, edit):
+        selectedFile = userSelectedFile('Select texture', IMAGE_FILES)
+
+        if selectedFile is None or selectedFile == '':
+            return
+        
+        edit.setText(selectedFile)
+
 
 class TextureConfigPanel():
     def __init__(self, textureConfig, freecadObject):
         self.textureConfig = textureConfig
         self.freecadObject = freecadObject
         self.textureManager = textureConfig.textureManager
+        self.entries = []
 
         self.form = FreeCADGui.PySideUic.loadUi(uiPath('texture_config.ui'))
 
-        self.materialTable = TextureConfigTable(self.textureManager.textureData['materials'], self.form.MaterialTable)
-        self.form.AddMaterialButton.clicked.connect(self.materialTable.addRow)
-        self.form.RemoveMaterialButton.clicked.connect(self.materialTable.removeRow)
+        self.form.Title.setText('%s Config' % (freecadObject.Label))
+        self.scrollAreaWidget = self.form.ScrollArea.widget()
+
+        self.form.AddMaterialButton.clicked.connect(self.addRow)
+
+        self.setupRows()
+
+    def setupRows(self):
+        for materialName, entryConfig in self.textureManager.textureData['materials'].items():
+            bumpMap = None
+
+            if 'bumpMap' in entryConfig:
+                bumpMap = entryConfig['bumpMap']
+
+            self.addRow(materialName, entryConfig['file'], bumpMap, entryConfig['realSize'])
+
+    def addRow(self, materialName = None, textureFile = None, bumpMapFile = None, realSize = None):
+        widget = MaterialConfigWidget(self, len(self.entries), materialName, textureFile, bumpMapFile, realSize)
+
+        self.entries.append(widget)
+
+        self.scrollAreaWidget.layout().addWidget(widget)
+    
+    def removeRow(self, widget):
+        self.entries.pop(widget.index)
+        layoutItem = self.scrollAreaWidget.layout().takeAt(widget.index)
+
+        layoutItem.widget().deleteLater()
 
     def accept(self):
-        self.materialTable.saveIntoConfig()
+        self.saveIntoConfig()
 
         FreeCADGui.Control.closeDialog()
 
@@ -140,6 +191,23 @@ class TextureConfigPanel():
 
     def reject(self):
         FreeCADGui.Control.closeDialog()
+    
+    def saveIntoConfig(self):
+        config = self.textureManager.textureData['materials']
+
+        config.clear()
+
+        for entry in self.entries:
+            materialName = entry.getMaterialName()
+
+            config[materialName] = {
+                'file': entry.getTextureFile(),
+                'bumpMap': entry.getBumpMapFile(),
+                'realSize': {
+                    's': entry.getLength(),
+                    't': entry.getHeight()
+                }
+            }
 
 class TextureConfig():
     def __init__(self, obj, fileObject=None):
