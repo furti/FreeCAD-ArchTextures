@@ -278,4 +278,7 @@ After we know how big the image should be we simply calculate each vertex coordi
 </details>
 
 ## Support
-Found a bug? Have a nice feature request? simply create an issue in this repository or post to this FreeCAD Forum thread https://forum.freecadweb.org/viewtopic.php?f=9&t=31598.
+Found a bug? Have a nice feature request? simply create an issue in this repository or post to this FreeCAD Forum threads:
+
+Bugs/Help Requests: https://forum.freecadweb.org/viewtopic.php?f=3&t=38222
+New Features: https://forum.freecadweb.org/viewtopic.php?f=10&t=38223
