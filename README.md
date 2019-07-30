@@ -38,7 +38,7 @@ and should finnaly end up here
 
 ![task panel](./Resources/Documentation/intro_task_panel.png)
 
-5. Select ```MatBricks``` in the Material Combo Box and double click the "Texture File" column. Select a brick texture from your file system (I used textures from https://www.textures.com/). After you click "OK" nothing will happen because the TextureConfig is still hidden.
+5. Select ```MatBricks``` in the Material Combo Box and click the "..." button next to the "Texture" input field. Select a brick texture from your file system (I used textures from https://www.textures.com/). After you click "OK" nothing will happen because the TextureConfig is still hidden.
 
 6. Select the TextureConfig in the Tree View and hit the "Space" key. This will add the texture in our config to all objects with the "MatBricks" materials. When hiding the TextureConfig again, the textures will be removed from the 3D View. When the textures are visible you should see something like this
 
@@ -82,6 +82,26 @@ When mapping the texture to a face the algorithm works as follows:
  1. When the real size is set and the texture is not quadratic, the algorithm maps the longest side of the texture to the longest side of the face
  2. When the real size is not set or the texture is quadratic, the algorithm maps the "s" side of the texture to the longest side of the face
  3. When a override is set for a face, and the override has a rotation other the 0, this rotation will be used to rotate the texture on this face
+
+## Bump mapping
+
+Bump mapping is a technique to add a lot more details to an object without actually modelling it. It is best explained with an example.
+
+Lets say we have a simple wall with a brick texture applied
+![Wall textured](./Resources/Documentation/bricks_textured.png)
+
+The wall looks a bit flat. Normally there are bumps in the bricks and shadows in the gaps. Modelling this small details will need a long time to finish and will increase rendering time a lot.
+But with bump mapping we get a lot of details nearly for free. This is the same object with the same texture but an additional normal map applied.
+
+![Wall bump map](./Resources/Documentation/bricks_normal_map.png)
+
+This looks a lot more realistic.
+
+There are two types of bump maps available:
+ - **Height Map**: This is a simple greyscale texture that contains height informations per pixel. The darker the pixel, the deeper inside the surface it is.
+ - **Normal Map**: A normal map is a blueish type of texture. This map looks more realistic than a height map as it contains more information than a height map. The color of each pixel defines the normal vector for this part of the surface. So light calculation could be a lot more accurate.
+
+ To enable bump mapping, simply select a bump map texture file for a given material. Bump mapping only works in combination with a texture. When you select a bump map only, nothing will be displayed at all.
 
 ## Environment Textures
 <details>
