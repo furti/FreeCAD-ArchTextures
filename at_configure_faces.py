@@ -60,7 +60,7 @@ class ConfigureFacesCommand:
 
     def GetResources(self):
         return {'MenuText': "Configure Faces",
-                'ToolTip' : "Override default mapping paramters for individual faces",
+                'ToolTip' : "Override default mapping parameters for individual faces",
                 'Pixmap': iconPath('ConfigureFaces.svg')
                 }
 

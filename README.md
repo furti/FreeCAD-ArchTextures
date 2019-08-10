@@ -1,6 +1,6 @@
 # FreeCAD-ArchTextures
 
-This workbench allows you to add textures to architectural objects directly in FreeCAD. No need for third party sofware, as long as you don't want to produce photorealistic renderings.
+This workbench allows you to add textures to architectural objects directly in FreeCAD. No need for third party software, as long as you don't want to produce photorealistic renderings.
 
 ## Motivation
 I was working on a arch project in FreeCAD. When the geometry was pretty much finished I decided that the building needs some texturing. This will help dramatically in understanding the overall idea (This is made from wood, there are bricks,...). I know Blender a bit and can produce texture materials that look quite good (at least for me :D) but I am lazy. I don't want to switch back and force between applications when something changes. And as my goal was not to create photorealistic renderings, i decided to do it in FreeCAD.
@@ -22,7 +22,7 @@ and should finnaly end up here
 
 **The workbench works with FreeCAD 0.18 Python 3 and Python 2 builds. It might also work with older versions but is not tested so far**
 
-1. At first download and open the "House.FCStd" file located unter "Resources/Documentation" in the repository. Or start with whatever arch project you want. Now you should see this building in the 3D View
+1. At first download and open the "House.FCStd" file located under "Resources/Documentation" in the repository. Or start with whatever arch project you want. Now you should see this building in the 3D View
 
 ![Untextured](./Resources/Documentation/untextured.png)
 
@@ -58,7 +58,7 @@ But wait! This does not really look like a brick wall at all. The texture is str
 
 ![Textured](./Resources/Documentation/textured.png)
 
-10. Most of the textures look good. But it might be, that the roof does not look like expected. The texture should be mapped so that the lines run horizontally but they run oblique accross the faces.
+10. Most of the textures look good. But it might be, that the roof does not look like expected. The texture should be mapped so that the lines run horizontally but they run oblique across the faces.
 
 ![Oblique](./Resources/Documentation/oblique_roof.png)
 
@@ -110,7 +110,7 @@ But with bump mapping we get a lot of details nearly for free. This is the same 
 This looks a lot more realistic.
 
 There are two types of bump maps available:
- - **Height Map**: This is a simple greyscale texture that contains height informations per pixel. The darker the pixel, the deeper inside the surface it is.
+ - **Height Map**: This is a simple greyscale texture that contains height information per pixel. The darker the pixel, the deeper inside the surface it is.
  - **Normal Map**: A normal map is a blueish type of texture. This map looks more realistic than a height map as it contains more information than a height map. The color of each pixel defines the normal vector for this part of the surface. So light calculation could be a lot more accurate.
 
  To enable bump mapping, simply select a bump map texture file for a given material. Bump mapping only works in combination with a texture. When you select a bump map only, nothing will be displayed at all.
@@ -162,7 +162,7 @@ This is the image that is displayed above the panorama image as the sky. The len
 
 ### Panorama Type
 The type of panorama image used.
- - ```Thirds```: The full image will be distributed evenly accross the three planes
+ - ```Thirds```: The full image will be distributed evenly across the three planes
  - ```360```: The image will be treated as 360 degrees panorama
 
 See the introduction for more details.
@@ -193,7 +193,7 @@ By default this property is set to -1mm so that it is below all geometry on the 
 ## Technical details
 <details>
     <summary>
-    This section gives some insight on the technical part of the workbench. This is mainly some documentation for me so that I still know in a year or two whats going on in this workbench. But maybe some aspects could be interesting for others too.
+    This section gives some insight on the technical part of the workbench. This is mainly some documentation for me so that I still know in a year or two what's going on in this workbench. But maybe some aspects could be interesting for others too.
     </summary>
 
 First, it is relative easy to add textures to objects in FreeCAD. Found this forum thread (https://forum.freecadweb.org/viewtopic.php?f=38&t=7216) that shows, adding a texture is only 3 lines of code. But mapping textures right on to an object involves a bit more code.
@@ -204,7 +204,7 @@ First, it is relative easy to add textures to objects in FreeCAD. Found this for
 4. Add both to the rootNode of your object and the texture should show up
 
 ### TextureConfig
-The texture config holds all the informations about materials and the textures to apply to them. When displayed the textures will be added to the objects, when hidden the textures are removed.
+The texture config holds all the information about materials and the textures to apply to them. When displayed the textures will be added to the objects, when hidden the textures are removed.
 
 ### TextureManager
 The texture manager does the heavy lifting. It keeps track of all textures and the textured objects and can add/remove textures to/from objects.
@@ -214,7 +214,7 @@ When texturing objects the texture manager looks for arch objects with a materia
 The texturing process is as follows:
 1. We get the RootNode of the object
 2. We search for the Coordinate3 node in the RootNode. This node contains a list of all vertices our object consists.
-3. We search for the SoBrepFaceSet in the RootNode. This is the object that contains the face informations
+3. We search for the SoBrepFaceSet in the RootNode. This is the object that contains the face information
     - This object has a list of vertex indices that map to the vertices in the Coordinate3 object
     - It also has a list of faces. This describe the number of triangles that form a face of the object.
     - It also contains a textureCoordinate field that works like the coordinate indices but for textures. **This should normally be the same as the coord index field or it should be empty** But FreeCAD sets it to -1. So we have to override it with the coordIndex field to get correct textures.
@@ -222,7 +222,7 @@ The texturing process is as follows:
     - We group the vertex indices by triangles. Each triangle is separated by a ```-1```.
     - Then we use the partIndex field to get the number of triangles per face and build the face list from this information
 5. When we have the faces of our object we need to calculate the texture coordinates for this face. See ```Calculating texture coordinates``` for further details.
-6. When we have all the informations we need, we simply add the required nodes to the scene graph and the textures show up.
+6. When we have all the information we need, we simply add the required nodes to the scene graph and the textures show up.
 
 ### Calculating texture coordinates
 This is the trickiest part in the process. The basic idea is pretty simple:
@@ -261,15 +261,15 @@ FreeCAD.Matrix(normalizedX.dot(globalX), normalizedX.dot(globalY), normalizedX.d
 ```
 
 #### 3. Move each face so that it is in the positive X and Z quadrant
-Now we can end up with faces that have vertices with a negative Z or X value. We want them all to be positive so that we can use this informations later on and simply use our bounding box to calculate the texture coordinates.
+Now we can end up with faces that have vertices with a negative Z or X value. We want them all to be positive so that we can use this information later on and simply use our bounding box to calculate the texture coordinates.
 
-To do so we check the Minimum X and minimum Z values of our face. If one is less than 0 we transform all vertices in the face by this amount in the positive direction. Now the smalles values will be 0 and everything else should be in the positive axis.
+To do so we check the Minimum X and minimum Z values of our face. If one is less than 0 we transform all vertices in the face by this amount in the positive direction. Now the smallest values will be 0 and everything else should be in the positive axis.
 
 #### 4. Calculate the bounding box for the face
 Now that everything is in the positive XZ plane we can simply use the smallest XYZ and biggest XYZ values to form our bounding box.
 
 #### 5. Map the image to match the bounding box
-Basically the image should map our bouding box. That means the lower left corner of the image maps to the lower left corner of our bounding box (XMin, YMin, ZMin) and the upper right corner of the image maps to the upper right corner of our bounding box (XMax, YMax, ZMax).
+Basically the image should map our bounding box. That means the lower left corner of the image maps to the lower left corner of our bounding box (XMin, YMin, ZMin) and the upper right corner of the image maps to the upper right corner of our bounding box (XMax, YMax, ZMax).
 
 When the user sets the ```realSize``` property of the texture config, we use this informatoins to calculate a scale for the image first. Lets say the face is 2x2 meters in size. And the image has a real size of 1x1 meters. Than we have to repeat the texture 2 times in each direction to get it scaled right.
 
