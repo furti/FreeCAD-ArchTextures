@@ -9,7 +9,7 @@ class CreateEnvironmentConfigCommand:
     commandName = 'Create_Environment_Config'
 
     def GetResources(self):
-        return {'MenuText': "Create Environent Config",
+        return {'MenuText': "Create Environment Config",
                 'ToolTip' : "Create a new EnvironmentConfig object to store environment textures",
                 'Pixmap': iconPath('CreateEnvironmentConfig.svg')
                 }
