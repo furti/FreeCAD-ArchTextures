@@ -103,6 +103,11 @@ class TextureManager():
                     rootnode = o.ViewObject.RootNode
                     switch = faceset_utils.findSwitch(rootnode)
                     shadedNode = faceset_utils.findShadedNode(switch)
+
+                    if shadedNode is None:
+                        print('Object %s has no shaded node. Skipping...' % (o.Label,))
+                        continue
+
                     brep = faceset_utils.findBrepFaceset(shadedNode)
                     material = faceset_utils.findMaterial(shadedNode)
                     vertexCoordinates = faceset_utils.findVertexCoordinates(
