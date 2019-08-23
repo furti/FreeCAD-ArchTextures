@@ -193,7 +193,13 @@ class TextureManager():
         self.texturedObjects = []
 
     def isTexturable(self, o):
-        return hasattr(o, 'Shape') and hasattr(o, 'Material') and o.Material is not None and o.ViewObject.Visibility
+        if not hasattr(o, 'Shape') or o.Shape is None or o.Shape.isNull():
+            return False
+        
+        if not hasattr(o, 'Material') or o.Material is None:
+            return False
+
+        return o.ViewObject.Visibility
 
     def setupTextureCoordinateIndex(self, brep):
         coordinateIndex = brep.coordIndex.getValues()
