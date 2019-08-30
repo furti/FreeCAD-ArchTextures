@@ -11,14 +11,6 @@ class Light():
     def setProperties(self, obj):
         pl = obj.PropertiesList
 
-        if not 'HorizontalRotation' in pl:
-            obj.addProperty("App::PropertyAngle", "HorizontalRotation", "Light",
-                            "The horizontal rotation around the origin. Zero means a light pointing from south to north.").HorizontalRotation = 0
-        
-        if not 'VerticalRotation' in pl:
-            obj.addProperty("App::PropertyAngle", "VerticalRotation", "Light", 
-                            "The up and downward rotation").VerticalRotation = 45
-        
         if not 'Color' in pl:
             obj.addProperty("App::PropertyColor", "Color", "Light", 
                             "The color of the light").Color = (1.0, 0.94, 0.91)
@@ -52,38 +44,18 @@ class ViewProviderLight:
         sceneGraph = FreeCADGui.ActiveDocument.ActiveView.getSceneGraph()
 
         self.geometryNode = coin.SoSeparator()
-        
+        self.transform = coin.SoTransform()
+        self.material = coin.SoMaterial()
         self.coinLight = self.createLightInstance()
+        actualGeometry = self.createGeometry()
+
+        self.geometryNode.addChild(self.transform)
+        self.geometryNode.addChild(self.material)
+
+        if actualGeometry is not None:
+            self.geometryNode.addChild(actualGeometry)
+        
         sceneGraph.insertChild(self.coinLight, 1)
-
-        # self.coords = coin.SoCoordinate3()
-        # self.coords.point.set1Value(0, 0, 0, -1)
-        # self.coords.point.set1Value(1, 1, 0, -1)
-        # self.coords.point.set1Value(2, 1, 1, -1)
-        # self.coords.point.set1Value(3, 0, 1, -1)
-
-        # textureCoords = coin.SoTextureCoordinate2()
-        # textureCoords.point.set1Value(0, 0, 0)
-        # textureCoords.point.set1Value(1, 1, 0)
-        # textureCoords.point.set1Value(2, 1, 1)
-        # textureCoords.point.set1Value(3, 0, 1)
-
-        # faceset = coin.SoFaceSet()
-        # faceset.numVertices.set1Value(0, 4)
-
-        # # This makes it possible to select the object in the 3D View
-        # selectionNode = coin.SoType.fromName("SoFCSelection").createInstance()
-        # selectionNode.documentName.setValue(FreeCAD.ActiveDocument.Name)
-        # selectionNode.objectName.setValue(self.Object.Name)
-        # selectionNode.subElementName.setValue("Face")
-        # selectionNode.addChild(faceset)
-
-        # self.texture = coin.SoTexture2()
-
-        # self.imageNode.addChild(self.coords)
-        # self.imageNode.addChild(textureCoords)
-        # self.imageNode.addChild(self.texture)
-        # self.imageNode.addChild(selectionNode)
 
         vobj.addDisplayMode(self.geometryNode, "Light")
 
@@ -93,6 +65,9 @@ class ViewProviderLight:
         self.updateIntensity()
 
     def createLightInstance(self):
+        raise NotImplementedError()
+    
+    def createGeometry(self):
         raise NotImplementedError()
 
     def getDisplayModes(self,obj):
@@ -112,6 +87,8 @@ class ViewProviderLight:
             self.updateColor()
         elif prop == 'Intensity':
             self.updateIntensity()
+        elif prop == 'Location':
+            self.updateLocation()
  
     def onChanged(self, vp, prop):
         if prop == 'Visibility':
@@ -123,25 +100,39 @@ class ViewProviderLight:
     def __setstate__(self,state):
         return None
     
+    def updateLocation(self):
+        if hasattr(self.Object, 'Location'):
+            location = self.Object.Location
+            coinVector = coin.SbVec3f(location.x, location.y, location.z)
+
+            self.coinLight.location.setValue(coinVector)
+
+            self.updateGeometryLocation(coinVector)
+    
     def updateDirection(self):
-        horizontalRotation = self.Object.HorizontalRotation
-        verticalRotation = self.Object.VerticalRotation
+        if hasattr(self.Object, 'HorizontalRotation') and hasattr(self.Object, 'VerticalRotation'):
+            horizontalRotation = self.Object.HorizontalRotation
+            verticalRotation = self.Object.VerticalRotation
 
-        # Defaults to south to north
-        direction = FreeCAD.Vector(0, 1, 0)
+            # Defaults to south to north
+            direction = FreeCAD.Vector(0, 1, 0)
 
-        # Negative Z because we want the light to follow the real sun path from East to west.
-        rotateZ = FreeCAD.Rotation(FreeCAD.Vector(0, 0, -1), horizontalRotation)
+            # Negative Z because we want the light to follow the real sun path from East to west.
+            rotateZ = FreeCAD.Rotation(FreeCAD.Vector(0, 0, -1), horizontalRotation)
 
-        # Negative X because a positive rotation should let the light point downwards
-        rotateX = FreeCAD.Rotation(FreeCAD.Vector(-1, 0, 0), verticalRotation)
+            # Negative X because a positive rotation should let the light point downwards
+            rotateX = FreeCAD.Rotation(FreeCAD.Vector(-1, 0, 0), verticalRotation)
 
-        direction = rotateZ.multVec(direction)
-        direction = rotateX.multVec(direction)
+            direction = rotateZ.multVec(direction)
+            direction = rotateX.multVec(direction)
 
-        self.coinLight.direction.setValue(coin.SbVec3f(direction.x, direction.y, direction.z))
+            coinVector = coin.SbVec3f(direction.x, direction.y, direction.z)
 
-        #print('h: %s, v: %s, d: %s' % (horizontalRotation, verticalRotation, direction))
+            self.coinLight.direction.setValue(coinVector)
+
+            self.updateGeometryDirection(coinVector)
+
+            #print('h: %s, v: %s, d: %s' % (horizontalRotation, verticalRotation, direction))
     
     def updateLightVisibility(self):
         self.coinLight.on.setValue(self.ViewObject.Visibility)
@@ -153,12 +144,20 @@ class ViewProviderLight:
         g = color[1]
         b = color[2]
 
-        self.coinLight.color.setValue(coin.SbColor(r, g, b))
+        coinColor = coin.SbColor(r, g, b)
+
+        self.coinLight.color.setValue(coinColor)
+        self.material.diffuseColor.setValue(coinColor)
     
     def updateIntensity(self):
         self.coinLight.intensity.setValue(self.Object.Intensity)
-
- 
+    
+    def updateGeometryLocation(self, coinVector):
+        self.transform.translation.setValue(coinVector)
+    
+    def updateGeometryDirection(self, coinVector):
+        # Nothing to do right now. Subclasses override this
+        pass
 
 def createDirectionalLight():
     obj = FreeCAD.ActiveDocument.addObject("App::FeaturePython", "DirectionalLight")
