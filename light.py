@@ -123,6 +123,8 @@ class ViewProviderLight:
             # Negative X because a positive rotation should let the light point downwards
             rotateX = FreeCAD.Rotation(FreeCAD.Vector(-1, 0, 0), verticalRotation)
 
+            rotation = rotateZ.multiply(rotateX)
+
             direction = rotateZ.multVec(direction)
             direction = rotateX.multVec(direction)
 
@@ -130,7 +132,7 @@ class ViewProviderLight:
 
             self.coinLight.direction.setValue(coinVector)
 
-            self.updateGeometryDirection(coinVector)
+            self.updateGeometryDirection(rotation)
 
             #print('h: %s, v: %s, d: %s' % (horizontalRotation, verticalRotation, direction))
     
@@ -155,7 +157,7 @@ class ViewProviderLight:
     def updateGeometryLocation(self, coinVector):
         self.transform.translation.setValue(coinVector)
     
-    def updateGeometryDirection(self, coinVector):
+    def updateGeometryDirection(self, rotation):
         # Nothing to do right now. Subclasses override this
         pass
 
