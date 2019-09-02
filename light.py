@@ -2,6 +2,8 @@ import FreeCAD
 import FreeCADGui
 from pivy import coin
 
+import arch_texture_utils.faceset_utils as faceset_utils
+
 class Light():
     def __init__(self, obj):
         obj.Proxy = self
@@ -40,9 +42,12 @@ class ViewProviderLight:
     def attach(self, vobj):
         self.ViewObject = vobj
         self.Object = vobj.Object
+
+        self.setProperties(vobj)
         
         sceneGraph = FreeCADGui.ActiveDocument.ActiveView.getSceneGraph()
 
+        self.switch = coin.SoSwitch()
         self.geometryNode = coin.SoSeparator()
         self.transform = coin.SoTransform()
         self.material = coin.SoMaterial()
@@ -57,12 +62,22 @@ class ViewProviderLight:
         
         sceneGraph.insertChild(self.coinLight, 1)
 
-        vobj.addDisplayMode(self.geometryNode, "Light")
+        self.switch.addChild(self.geometryNode)
+
+        print(vobj.addDisplayMode(self.switch, "Light"))
 
         self.updateLightVisibility()
         self.updateDirection()
         self.updateColor()
         self.updateIntensity()
+        self.updateGeometryVisibility()
+    
+    def setProperties(self, vobj):
+        pl = vobj.PropertiesList
+
+        if not 'ShowGeometry' in pl:
+            vobj.addProperty("App::PropertyBool", "ShowGeometry", "Light", 
+                            "Show the light as geometry in the 3D View").ShowGeometry = True
 
     def createLightInstance(self):
         raise NotImplementedError()
@@ -93,6 +108,8 @@ class ViewProviderLight:
     def onChanged(self, vp, prop):
         if prop == 'Visibility':
             self.updateLightVisibility()
+        elif prop == 'ShowGeometry':
+            self.updateGeometryVisibility()
 
     def __getstate__(self):
         return None
@@ -160,6 +177,15 @@ class ViewProviderLight:
     def updateGeometryDirection(self, rotation):
         # Nothing to do right now. Subclasses override this
         pass
+    
+    def updateGeometryVisibility(self):
+        if not hasattr(self, 'switch') or self.switch is None:
+            return
+        
+        if self.ViewObject.ShowGeometry:
+            self.switch.whichChild.setValue(0)
+        else:
+            self.switch.whichChild.setValue(coin.SO_SWITCH_NONE)
 
 def createDirectionalLight():
     obj = FreeCAD.ActiveDocument.addObject("App::FeaturePython", "DirectionalLight")
