@@ -1,7 +1,9 @@
 import FreeCAD
 import FreeCADGui
 from pivy import coin
+
 import light
+from arch_texture_utils.resource_utils import iconPath
 
 class DirectionalLight(light.Light):
     def __init__(self, obj):
@@ -77,6 +79,9 @@ class ViewProviderDirectionalLight(light.ViewProviderLight):
         axis = rotation.Axis
 
         self.transform.rotation.setValue(coin.SbVec3f(axis.x, axis.y, axis.z), rotation.Angle)
+    
+    def getIcon(self):
+        return iconPath("DirectionalLight.svg")
 
 def createDirectionalLight():
     obj = FreeCAD.ActiveDocument.addObject("App::FeaturePython", "DirectionalLight")

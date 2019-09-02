@@ -1,7 +1,9 @@
 import FreeCAD
 import FreeCADGui
 from pivy import coin
+
 import light
+from arch_texture_utils.resource_utils import iconPath
 
 class PointLight(light.Light):
     def __init__(self, obj):
@@ -36,6 +38,9 @@ class ViewProviderPointLight(light.ViewProviderLight):
         sphere.radius.setValue(50.0)
 
         return sphere
+    
+    def getIcon(self):
+        return iconPath("PointLight.svg")
     
 def createPointLight():
     obj = FreeCAD.ActiveDocument.addObject("App::FeaturePython", "PointLight")

@@ -16,3 +16,4 @@ import at_export_config
 import at_import_config
 import at_configure_faces
 import at_create_environment_config
+import create_light
