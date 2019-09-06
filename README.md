@@ -15,7 +15,7 @@ This section gives you a step by step instruction on how to add textures to a Fr
 
 ![Untextured](./Resources/Documentation/untextured.png)
 
-and should finnaly end up here
+and should finally end up here
 
 ![Textured](./Resources/Documentation/textured.png)
     </summary>
