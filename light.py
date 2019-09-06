@@ -38,13 +38,15 @@ class Light():
 class ViewProviderLight:
     def __init__(self, vobj):
         vobj.Proxy = self
+
+        self.setProperties(vobj)
  
     def attach(self, vobj):
         self.ViewObject = vobj
         self.Object = vobj.Object
 
-        self.setProperties(vobj)
-        
+        # Setting properties does not work here as the pl is not filled yet :/
+
         sceneGraph = FreeCADGui.ActiveDocument.ActiveView.getSceneGraph()
 
         self.switch = coin.SoSwitch()
@@ -64,13 +66,13 @@ class ViewProviderLight:
 
         self.switch.addChild(self.geometryNode)
 
-        print(vobj.addDisplayMode(self.switch, "Light"))
+        vobj.addDisplayMode(self.switch, "Light")
 
         self.updateLightVisibility()
         self.updateDirection()
         self.updateColor()
         self.updateIntensity()
-        self.updateGeometryVisibility()
+        # self.updateGeometryVisibility()
     
     def setProperties(self, vobj):
         pl = vobj.PropertiesList
