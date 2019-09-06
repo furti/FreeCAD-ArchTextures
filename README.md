@@ -77,6 +77,18 @@ When something happens and you end up with broken textures or a broken 3D View (
 
 ## Texture mapping
 
+Currently Texture Mapping only works with objects that have a Material assigned. All architectural objects have such a property. To create a material, go to the Arch workbench and create a material there. See [https://www.freecadweb.org/wiki/Arch_SetMaterial](https://www.freecadweb.org/wiki/Arch_SetMaterial) for further details.
+
+It is also not possible to texure faces of a single object individually. All faces will get the same texture based on the material assigned.
+
+From FreeCAD 0.19 onwards, it is possible to also texture objects created with other workbenches than the Arch
+workbench.
+ 1. Select the object in the TreeView
+ 2. Right click in the Data Tab and click "Show all"
+ 3. Right click again and click "Add property"
+ 4. ![Add property](./Resources/Documentation/add_property.png)
+ 5. Now you can assign a material to the object like you would for a Arch object
+
 When mapping the texture to a face the algorithm works as follows:
 
  1. When the real size is set and the texture is not quadratic, the algorithm maps the longest side of the texture to the longest side of the face
