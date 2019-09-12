@@ -83,7 +83,7 @@ class TextureManager():
     def deserializeTextureData(self, textureDataAsString):
         self.textureData = json.loads(
             textureDataAsString, encoding='utf-8', cls=TextureConfigDecoder)
-
+    
     def textureObjects(self, debug=False):
         # Make sure that no old textures are left. Otherwise we could end up with duplicate textures
         self.removeTextures()
@@ -118,7 +118,7 @@ class TextureManager():
 
                     faceSet = faceset_utils.buildFaceSet(
                         brep, vertexCoordinates, self.getFaceOverrides(), transform)
-                    textureCoords = faceSet.calculateTextureCoordinates(
+                    textureCoords = faceSet.calculateSoTextureCoordinates(
                         textureConfig['realSize'])
 
                     if debug:
@@ -206,8 +206,8 @@ class TextureManager():
 
         brep.textureCoordIndex.setValues(
             0, len(coordinateIndex), coordinateIndex)
-
-    def getTextureForMaterial(self, material):
+    
+    def getTextureForMaterial(self, material, createSoTexture2=True):
         materialName = material.Name
 
         if materialName in self.textureData['materials']:
@@ -221,23 +221,29 @@ class TextureManager():
                 bumpMapFile = py2_utils.textureFileString(
                     materialConfig['bumpMap'])
 
-            if imageFile not in self.textureCache:
+            if createSoTexture2 and imageFile not in self.textureCache:
                 tex = coin.SoTexture2()
                 tex.filename = imageFile
 
                 self.textureCache[imageFile] = tex
 
             if bumpMapFile is not None:
-                if bumpMapFile not in self.bumpMapCache:
+                if createSoTexture2 and bumpMapFile not in self.bumpMapCache:
                     bumpMap = coin.SoBumpMap()
 
                     bumpMap.filename.setValue(bumpMapFile)
 
                     self.bumpMapCache[bumpMapFile] = bumpMap
 
-                bumpMap = self.bumpMapCache[bumpMapFile]
+                if createSoTexture2:
+                    bumpMap = self.bumpMapCache[bumpMapFile]
+                else:
+                    bumpMap = bumpMapFile
 
-            texture = self.textureCache[imageFile]
+            if createSoTexture2:
+                texture = self.textureCache[imageFile]
+            else:
+                texture = imageFile
 
             return (texture, bumpMap, materialConfig)
 

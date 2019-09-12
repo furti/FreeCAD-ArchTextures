@@ -52,9 +52,6 @@ def calculateTextureCoordinate(vector, boundingBox, scaleFactor, swapAxis=False)
 
     return (s * scaleS, t * scaleT)
 
-def appendCoordinate(textureCoords, index, s, t):
-    textureCoords.point.set1Value(index, s, t)
-
 def extractOverrides(overrides):
     extractedOverrides = [None]
 
@@ -85,7 +82,8 @@ def vectorListEquals(vectors1, vectors2):
     return True
 
 class Face():
-    def __init__(self):
+    def __init__(self, faceCoordinates):
+        self.faceCoordinates = faceCoordinates
         self.indices = []
         self.vertices = []
         self.originalVertices = []
@@ -96,18 +94,21 @@ class Face():
             self.positiveAxisVertices = []
             self.positiveTransform = None
     
+    def getNumberOfVertices(self):
+        return len(self.vertices)
+    
     def addVertex(self, index, vect):
         if index not in self.indices:
             self.indices.append(index)
 
             self.originalVertices.append({
                 'index': index,
-                'vector': toFreeCADVector(vect.getValue())
+                'vector': vect
             })
             
             self.vertices.append({
                 'index': index,
-                'vector': toFreeCADVector(vect.getValue())
+                'vector': vect
             })
 
             self.length = 0
@@ -118,13 +119,58 @@ class Face():
 
         return vectorListEquals(ownVectors, vectors)
 
-    def appendTextureCoordinates(self, textureCoords, realSize):
+    def calculateTextureCoordinates(self, realSize, vertexOffset):
+        coordinates = []
+        coordinateIndices = []
+
         axisSwapped = self.shouldSwapAxis(realSize)
         scaleFactor = self.calculateScaleFactor(realSize, axisSwapped)
 
         for vertex in self.vertices:
             s, t = calculateTextureCoordinate(vertex['vector'], self.boundingBox, scaleFactor, axisSwapped)
-            appendCoordinate(textureCoords, vertex['index'], s, t)
+            coordinates.append((s, t))
+            coordinateIndices.append(vertex['index'])
+
+        faceCoordinateIndices = self.calculateFaceCoordinateIndices(coordinates, coordinateIndices, vertexOffset)
+
+        return (coordinates, coordinateIndices, faceCoordinateIndices)
+    
+    def calculateFaceCoordinateIndices(self, coordinates, coordinateIndices, vertexOffset):
+        '''
+            The face stores a faceCoordiantes list that holds a list of vertex indices
+            where each entry forms a triangle of the face
+                faceCoordinates = [(0, 1, 2), (3, 2, 1)]
+            
+            The coordinates hold all the uv mapping coordinates for this face. One for each vertex
+                coordinates = [(0,0), (0,1), (1, 1), (1,0)]
+            
+            The coordinateIndices map the coordinates to a vertex index.
+                coordinateIndices = [1, 2, 3, 0]
+            
+            The vertexOffset is the offset of this faces vertexes in the global vertex list of the object this
+            face belongs to. This is simply added to the indices in the result. Otherwhise the second face would
+            also produces indices starting from zero, where it should produce indices starting from e.g. 4. 
+                vertexOffset = 0
+            
+            In our example the coordinate (0,0) maps to the vertex 1, (0,1) to vertex 2, (1,1) to 3 and (1,0) to 0
+
+            This method now builds uv coordinates for each triangle. To do so it looks up every faceCoordinate
+            and maps the vertex index of the face coordinate to the uv coordinate in the coordinateIndices.
+                result = [(3, 0, 1), (2, 1, 0)]
+        '''
+        faceCoordinateIndices = []
+
+        for face in self.faceCoordinates:
+            faceIndices = []
+
+            for faceIndex in list(face):
+                coordinateIndexLocation = coordinateIndices.index(faceIndex)
+
+                faceIndices.append(coordinateIndexLocation + vertexOffset)
+            
+            faceCoordinateIndices.append(tuple(faceIndices))
+
+        return faceCoordinateIndices
     
     def calculateScaleFactor(self, realSize, axisSwapped=False):
         tScale = 1
@@ -374,7 +420,13 @@ class FaceSet():
         self.faces = []
     
     def addFace(self, faceCoordinates, vertices, faceOverrides=None, transform=None):
-        face = Face()
+        '''
+        Add a face to the faceset
+
+        faceCoordinates: a list of faces of the object. Each face is a list of tuples where a tuple is a triangle. [[(0, 1, 2), (1, 2, 3)], ...
+        vertices: a list of all vertices of the object
+        '''
+        face = Face(faceCoordinates)
 
         for coordinate in faceCoordinates:
             for index in coordinate:
@@ -386,13 +438,43 @@ class FaceSet():
 
         self.faces.append(face)
     
+    def calculateSoTextureCoordinates(self, realSize):
+        soTextureCoordinates = coin.SoTextureCoordinate2()
+
+        coordinateData = self.calculateTextureCoordinates(realSize)
+
+        textureCoordinates = coordinateData[0]
+        textureCoordinateIndices = coordinateData[1]
+
+        for listIndex, coordinate in enumerate(textureCoordinates):
+            coordinateIndex = textureCoordinateIndices[listIndex]
+            s, t = coordinate
+
+            soTextureCoordinates.point.set1Value(coordinateIndex, s, t)
+
+        return soTextureCoordinates
+    
     def calculateTextureCoordinates(self, realSize):
-        textureCoords = coin.SoTextureCoordinate2()
+        textureCoordinates = []
+        textureCoordinateIndices = []
+        textureFaceCoordinateIndices = []
+
+        vertexOffset = 0
 
         for face in self.faces:
-            face.appendTextureCoordinates(textureCoords, realSize)
+            coordinateData = face.calculateTextureCoordinates(realSize, vertexOffset)
 
-        return textureCoords
+            coordinates = coordinateData[0]
+            coordinateIndices = coordinateData[1]
+            faceCoordinateIndices = coordinateData[2]
+
+            textureCoordinates.extend(coordinates)
+            textureCoordinateIndices.extend(coordinateIndices)
+            textureFaceCoordinateIndices.extend(faceCoordinateIndices)
+
+            vertexOffset += face.getNumberOfVertices()
+
+        return (textureCoordinates, textureCoordinateIndices, textureFaceCoordinateIndices)
     
     def printData(self, realSize=None, faceNumber=None):
         if faceNumber is not None:
@@ -481,12 +563,45 @@ def buildFaceSet(brep, vertexCoordinates, faceOverrides=None, transform=None):
     faceSet = FaceSet()
     
     faceCoordinateList = buildFaceCoordinates(brep)
-    vertexValues = vertexCoordinates.point.getValues()
+    vertexValues = [toFreeCADVector(vertex.getValue()) for vertex in vertexCoordinates.point.getValues()]
 
     for faceCoordinates in faceCoordinateList:
         faceSet.addFace(faceCoordinates, vertexValues, faceOverrides, transform)
 
     return faceSet
+
+def buildFaceSetForMesh(mesh, faceOverrides=None):
+    faceSet = FaceSet()
+
+    vertexValues = mesh.Topology[0]
+    faceCoordinateList = groupFacetsByNormal(mesh.Facets)
+
+    for faceCoordinates in faceCoordinateList:
+        faceSet.addFace(faceCoordinates, vertexValues, faceOverrides)
+
+    return faceSet
+
+def groupFacetsByNormal(facets):
+    groupsWithNormals = []
+
+    for facet in facets:
+        group = findFacetGroup(groupsWithNormals, facet)
+
+        if group is None:
+            group = []
+
+            groupsWithNormals.append((FreeCAD.Vector(facet.Normal), group))
+        
+        group.append(facet.PointIndices)
+
+    return [group[1] for group in groupsWithNormals]
+
+def findFacetGroup(groupsWithNormals, facet):
+    for group in groupsWithNormals:
+        if group[0].isEqual(facet.Normal, 0.0001):
+            return group[1]
+
+    return None
 
 def findTransform(node):
     children = node.getChildren()
@@ -531,13 +646,25 @@ if __name__ == "__main__":
         }
     ]
     
-    rootNode = FreeCAD.ActiveDocument.Roof.ViewObject.RootNode
-    switch = findSwitch(rootNode)
-    shadedNode = findShadedNode(switch)
-    brep = findBrepFaceset(shadedNode)
-    vertexCoordinates = findVertexCoordinates(rootNode)
-    transform = findTransform(rootNode)
+    # rootNode = FreeCAD.ActiveDocument.Roof.ViewObject.RootNode
+    # switch = findSwitch(rootNode)
+    # shadedNode = findShadedNode(switch)
+    # brep = findBrepFaceset(shadedNode)
+    # vertexCoordinates = findVertexCoordinates(rootNode)
+    # transform = findTransform(rootNode)
 
-    faceSet = buildFaceSet(brep, vertexCoordinates, testOverrides, transform)
-    faceSet.printData({'s': 1680, 't': 1440})
-    # printValues(textureCoords.point.getValues())
+    # faceSet = buildFaceSet(brep, vertexCoordinates, testOverrides, transform)
+    # faceSet.printData({'s': 1680, 't': 1440})
+    # # printValues(textureCoords.point.getValues())
+
+    import MeshPart
+    box = FreeCAD.ActiveDocument.Box
+    
+    mesh = MeshPart.meshFromShape(Shape=box.Shape,
+                                    LinearDeflection=0.1,
+                                    AngularDeflection=0.523599,
+                                    Relative=False)
+
+    faceSet = buildFaceSetForMesh(mesh)
+    print(faceSet.calculateTextureCoordinates(None))
+    print(faceSet.calculateSoTextureCoordinates(None))

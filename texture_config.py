@@ -4,6 +4,7 @@ from pivy import coin
 from texture_manager import TextureManager
 from arch_texture_utils.resource_utils import uiPath
 from arch_texture_utils.qtutils import QComboBox, QTableWidgetItem, QDoubleSpinBox, userSelectedFile, IMAGE_FILES, showInfo
+from arch_texture_utils import faceset_utils
 
 from PySide2.QtWidgets import QGroupBox
 from PySide2.QtWidgets import QLineEdit
@@ -225,6 +226,35 @@ class TextureConfig():
             self.textureManager.textureObjects()
         else:
             self.textureManager.removeTextures()
+    
+    def enhanceMaterial(self, renderMaterial, renderView, mesh):
+        textureManager = self.textureManager
+        o = renderView.Source
+
+        if not textureManager.isTexturable(o):
+            return
+        
+        textureData = textureManager.getTextureForMaterial(o.Material, createSoTexture2=False)
+
+        texture = textureData[0]
+        bumpMap = textureData[1]
+        textureConfig = textureData[2]
+
+        if texture is None:
+            return
+        
+        faceSet = faceset_utils.buildFaceSetForMesh(mesh, textureManager.getFaceOverrides())
+        coodrinateData = faceSet.calculateTextureCoordinates(textureConfig['realSize'])
+
+        textureCoords = coodrinateData[0]
+        faceCoordinateIndices = coodrinateData[2]
+
+        print(textureCoords)
+        print(faceCoordinateIndices)
+
+        renderMaterial.imageTextureFile = texture
+        renderMaterial.uvcoordinates = textureCoords
+        renderMaterial.uvindices = faceCoordinateIndices
     
     def export(self, fileObject):
         self.textureManager.export(fileObject)
