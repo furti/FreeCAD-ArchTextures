@@ -244,17 +244,26 @@ class TextureConfig():
             return
         
         faceSet = faceset_utils.buildFaceSetForMesh(mesh, textureManager.getFaceOverrides())
-        coodrinateData = faceSet.calculateTextureCoordinates(textureConfig['realSize'])
+        coordinateData = faceSet.calculateTextureCoordinates(textureConfig['realSize'])
 
-        textureCoords = coodrinateData[0]
-        faceCoordinateIndices = coodrinateData[2]
+        textureCoords = coordinateData[0]
+        faceCoordinateIndices = coordinateData[2]
+        texToPos = coordinateData[1]
 
-        print(textureCoords)
-        print(faceCoordinateIndices)
+        #make the texture face order the same as position face order
+        newlyOrderedList = [None] * len(faceCoordinateIndices)
+
+        for face in faceCoordinateIndices:
+            posTuple = (texToPos[face[0]], texToPos[face[1]], texToPos[face[2]])
+            origIndex = mesh.Topology[1].index(posTuple)
+            newlyOrderedList[origIndex] = face
+
+        #print(textureCoords)
+        #print(faceCoordinateIndices)
 
         renderMaterial.imageTextureFile = texture
         renderMaterial.uvcoordinates = textureCoords
-        renderMaterial.uvindices = faceCoordinateIndices
+        renderMaterial.uvindices = newlyOrderedList
     
     def export(self, fileObject):
         self.textureManager.export(fileObject)
