@@ -54,13 +54,14 @@ class ViewProviderLight:
         self.transform = coin.SoTransform()
         self.material = coin.SoMaterial()
         self.coinLight = self.createLightInstance()
-        actualGeometry = self.createGeometry()
+        self.actualGeometry = self.createGeometry()
+        self.material.transparency.setValue(0.5)
 
         self.geometryNode.addChild(self.transform)
         self.geometryNode.addChild(self.material)
 
-        if actualGeometry is not None:
-            self.geometryNode.addChild(actualGeometry)
+        if self.actualGeometry is not None:
+            self.geometryNode.addChild(self.actualGeometry)
         
         sceneGraph.insertChild(self.coinLight, 1)
 
