@@ -94,17 +94,17 @@ When mapping the texture to a face the algorithm works as follows:
  2. When the real size is not set or the texture is quadratic, the algorithm maps the "s" side of the texture to the longest side of the face
  3. When a override is set for a face, and the override has a rotation other the 0, this rotation will be used to rotate the texture on this face
 
-The following image formats are supported:
- - xwd
- - tiff
- - tga
- - png
- - pic
- - jpeg
- - JPEG-2000
- - gif
- - rgb
- - eps
+### Supported Image Formats
+- xwd
+- tiff
+- tga
+- png
+- pic
+- jpeg
+- JPEG-2000
+- gif
+- rgb
+- eps
 
 ## Bump mapping
 
