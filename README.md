@@ -10,7 +10,7 @@ I was working on a arch project in FreeCAD. When the geometry was pretty much fi
 A good advice right at the beginning: Apply textures only **after** you finished modelling your geometry. Otherwise it might be easily possible that you break your texture mapping later on and have to do it again.
 
 <details>
-    <summary>
+    <summary><b>Expand this section</b> to learn about how to add textures to a FreeCAD project</summary>
 This section gives you a step by step instruction on how to add textures to a FreeCAD project. It will guide you through the process of texturing a small building. We start here
 
 ![Untextured](./Resources/Documentation/untextured.png)
@@ -18,7 +18,6 @@ This section gives you a step by step instruction on how to add textures to a Fr
 and should finally end up here
 
 ![Textured](./Resources/Documentation/textured.png)
-    </summary>
 
 **The workbench works with FreeCAD 0.18 Python 3 and Python 2 builds. It might also work with older versions but is not tested so far**
 
@@ -129,7 +128,7 @@ There are two types of bump maps available:
 
 ## Environment Textures
 <details>
-    <summary>
+    <summary><b>Expand this section</b> to learn more about Environment Textures</summary>
 When you have done some texturing and want to show off your work, the simplest way would be to create a screenshot inside freecad. You position your camera perfectly and take a shot.
 
 ![No Environment](./Resources/Documentation/textured_no_environment.png)
@@ -140,8 +139,7 @@ With the right config you can enhance your screenshots a lot and get something l
 
 ![With Environment](./Resources/Documentation/textured_environment.png)
 
-Read more...
-    </summary>
+To create a new `EnvironmentConfig` you click the "Create EnvironmentConfig" command.
 
 To create a new EnvironmentConfig you click the "Create EnvironmentConfig" command.
 
@@ -205,7 +203,7 @@ By default this property is set to -1mm so that it is below all geometry on the 
 ## Technical details
 <details>
     <summary>
-    This section gives some insight on the technical part of the workbench. This is mainly some documentation for me so that I still know in a year or two what's going on in this workbench. But maybe some aspects could be interesting for others too.
+    <b>Expand this section</b> to learn some insight on the technical part of the workbench. This is mainly some documentation for me so that I still know in a year or two what's going on in this workbench. But maybe some aspects could be interesting for others too.
     </summary>
 
 First, it is relative easy to add textures to objects in FreeCAD. Found this forum thread (https://forum.freecadweb.org/viewtopic.php?f=38&t=7216) that shows, adding a texture is only 3 lines of code. But mapping textures right on to an object involves a bit more code.
