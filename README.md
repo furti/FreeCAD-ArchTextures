@@ -3,7 +3,8 @@
 This workbench allows you to add textures to architectural objects directly in FreeCAD. No need for third party software, as long as you don't want to produce photorealistic renderings.
 
 ## Motivation
-I was working on a arch project in FreeCAD. When the geometry was pretty much finished I decided that the building needs some texturing. This will help dramatically in understanding the overall idea (This is made from wood, there are bricks,...). I know Blender a bit and can produce texture materials that look quite good (at least for me :D) but I am lazy. I don't want to switch back and force between applications when something changes. And as my goal was not to create photorealistic renderings, i decided to do it in FreeCAD.
+
+I was working on a Arch project in FreeCAD. When the geometry was pretty much finished I decided that the building needs some texturing. This will help dramatically in understanding the overall idea (This is made from wood, there are bricks,...). I know Blender a bit and can produce texture materials that look quite good (at least for me :D) but I am lazy. I don't want to switch back and forth between applications when something changes. And as my goal was not to create photorealistic renderings, I decided to do it in FreeCAD.
 
 ## Getting started
 
@@ -13,65 +14,69 @@ This workbench works with:
 * FreeCAD v0.19.x (Python 3)
  
 ### Best Practices 
+Apply textures only **after** you've finished modelling your geometry. Otherwise it might be easily possible that you break your texture mapping later on and have to do it again.
+
 <details>
     <summary><b>Expand this section</b> to learn about how to add textures to a FreeCAD project</summary>
-This section gives you a step by step instruction on how to add textures to a FreeCAD project. It will guide you through the process of texturing a small building. We start here
+
+This section gives you a step by step instruction on how to add textures to a FreeCAD project. It will guide you through the process of texturing a small building. 
+
+We start here:  
 
 ![Untextured](./Resources/Documentation/untextured.png)
 
-and should finally end up here
+and should finally end up here:  
 
 ![Textured](./Resources/Documentation/textured.png)
 
-**The workbench works with FreeCAD 0.18 Python 3 and Python 2 builds. It might also work with older versions but is not tested so far**
+1. Download and open the "House.FCStd" file located under [Resources/Documentation](./Resources/Documentation/) in the repository. Or start with whatever arch project you want. Now you should see this building in the 3D View
 
-1. At first download and open the "House.FCStd" file located under "Resources/Documentation" in the repository. Or start with whatever arch project you want. Now you should see this building in the 3D View
-
-![Untextured](./Resources/Documentation/untextured.png)
+    ![Untextured](./Resources/Documentation/untextured.png)
 
 2. Next switch to the Arch Texture Workbench and click the "Create TextureConfig" icon
 
-![workbench selection](./Resources/Documentation/intro_workbench_selection.png)
+    ![workbench selection](./Resources/Documentation/intro_workbench_selection.png)
 
 3. Now the object should be visible in the TreeView. TextureConfigs are hidden by default when we create them and when the document loads. This is done to prevent excessive loading times on startup.
 
-![texture config](./Resources/Documentation/intro_texture_config.png)
+    ![texture config](./Resources/Documentation/intro_texture_config.png)
 
 4. Now lets start texturing. Double click the TextureConfig object to display the task panel to set up some textures. After clicking the "Add Material" button, you should see something like this
 
-![task panel](./Resources/Documentation/intro_task_panel.png)
+    ![task panel](./Resources/Documentation/intro_task_panel.png)
 
-5. Select ```MatBricks``` in the Material Combo Box and click the "..." button next to the "Texture" input field. Select a brick texture from your file system (I used textures from https://www.textures.com/). After you click "OK" nothing will happen because the TextureConfig is still hidden.
+5. Select `MatBricks` in the Material Combo Box and click the "..." button next to the "Texture" input field. Select a brick texture from your file system (I used textures from https://www.textures.com/). After you click "OK" nothing will happen because the TextureConfig is still hidden.
 
 6. Select the TextureConfig in the Tree View and hit the "Space" key. This will add the texture in our config to all objects with the "MatBricks" materials. When hiding the TextureConfig again, the textures will be removed from the 3D View. When the textures are visible you should see something like this
 
-![unscaled bricks](./Resources/Documentation/intro_bricks_unscaled.png)
+    ![unscaled bricks](./Resources/Documentation/intro_bricks_unscaled.png)
 
-But wait! This does not really look like a brick wall at all. The texture is stretched pretty badly. But this is easy to fix.
+    But wait! This does not really look like a brick wall at all. The texture is stretched pretty badly. But this is easy to fix.
 
-7. Double click the TextureConfig again and add the real size of the texture. The bricks texture I used is about 1200x1200 mm in size. If the size of the texture is not given, simply google the size of a single brick and multiply it with the number of bricks in your texture.
+7. Double-click the TextureConfig again and add the real size of the texture. The bricks texture I used is about 1200x1200 mm in size. If the size of the texture is not given, simply google the size of a single brick and multiply it with the number of bricks in your texture.
 
-![real size](./Resources/Documentation/intro_real_size.png)
+    ![real size](./Resources/Documentation/intro_real_size.png)
 
 8. Click "OK" and check the 3D View again. Now it looks much more like a real brick wall.
 
-![scaled bricks](./Resources/Documentation/intro_bricks_scaled.png)
+    ![scaled bricks](./Resources/Documentation/intro_bricks_scaled.png)
 
 9. Repeat the above steps for all other materials and you should end up with something like this
 
-![Textured](./Resources/Documentation/textured.png)
+    ![Textured](./Resources/Documentation/textured.png)
 
 10. Most of the textures look good. But it might be, that the roof does not look like expected. The texture should be mapped so that the lines run horizontally but they run oblique across the faces.
 
-![Oblique](./Resources/Documentation/oblique_roof.png)
+    ![Oblique](./Resources/Documentation/oblique_roof.png)
 
-But this is pretty easy to fix. Select the TextureConfig in the TreeView and click the "Configure Faces" button.
+    But this is pretty easy to fix. Select the TextureConfig in the TreeView and click the "Configure Faces" button.
 
-![Configure Faces Command](./Resources/Documentation/configure_faces_command.png)
+    ![Configure Faces Command](./Resources/Documentation/configure_faces_command.png)
 
-Now enter the angle in degrees you want to rotate a certain face. Positive values rotate the texture clockwise and negative values counter clockwise. For our roof a rotation of 55 degrees for the front and back faces and -55 degrees for the side faces should work pretty well. Now select the faces you want to set the rotation for and click "Apply". The rotation is applied immediately. You have to unselect the faces to see the rotated texture.
+11. Now enter the angle in degrees you want to rotate a certain face. Positive values rotate the texture clockwise and negative values counter clockwise. For our roof a rotation of 55 degrees for the front and back faces and -55 degrees for the side faces should work pretty well. Now select the faces you want to set the rotation for and click "Apply". The rotation is applied immediately. You have to unselect the faces to see the rotated texture.
 
-![Configure Faces Command](./Resources/Documentation/straight_roof.png)
+    ![Configure Faces Command2](./Resources/Documentation/straight_roof.png)
+
 </details>
 
 ## Troubleshooting
@@ -82,15 +87,17 @@ When something happens and you end up with broken textures or a broken 3D View (
 
 Currently Texture Mapping only works with objects that have a Material assigned. All architectural objects have such a property. To create a material, go to the Arch workbench and create a material there. See [https://www.freecadweb.org/wiki/Arch_SetMaterial](https://www.freecadweb.org/wiki/Arch_SetMaterial) for further details.
 
-It is also not possible to texure faces of a single object individually. All faces will get the same texture based on the material assigned.
+It is also not possible to texture faces of a single object individually. All faces will get the same texture based on the material assigned.
 
-From FreeCAD 0.19 onwards, it is possible to also texture objects created with other workbenches than the Arch
+**Note:** From FreeCAD 0.19 onwards, it is possible to also texture objects created with other workbenches than the Arch
 workbench.
  1. Select the object in the TreeView
  2. Right click in the Data Tab and click "Show all"
  3. Right click again and click "Add property"
- 4. ![Add property](./Resources/Documentation/add_property.png)
- 5. Now you can assign a material to the object like you would for a Arch object
+ 4. In the *Group* field add `Base`.  
+  In the *Name* field add `Material`  
+    ![Add property](./Resources/Documentation/add_property.png)
+ 5. Now you can assign a material to the object like you would for an Arch object
 
 When mapping the texture to a face the algorithm works as follows:
 
@@ -114,30 +121,33 @@ When mapping the texture to a face the algorithm works as follows:
 
 Bump mapping is a technique to add a lot more details to an object without actually modelling it. It is best explained with an example.
 
-Lets say we have a simple wall with a brick texture applied
-![Wall textured](./Resources/Documentation/bricks_textured.png)
+Lets say we have a simple wall with a brick texture applied:  
+
+  ![Wall textured](./Resources/Documentation/bricks_textured.png)
 
 The wall looks a bit flat. Normally there are bumps in the bricks and shadows in the gaps. Modelling this small details will need a long time to finish and will increase rendering time a lot.
-But with bump mapping we get a lot of details nearly for free. This is the same object with the same texture but an additional normal map applied.
+But with bump mapping we get a lot of details nearly for free. This is the same object with the same texture but an additional normal map applied:  
 
-![Wall bump map](./Resources/Documentation/bricks_normal_map.png)
+  ![Wall bump map](./Resources/Documentation/bricks_normal_map.png)
 
 This looks a lot more realistic.
 
 There are two types of bump maps available:
  - **Height Map**: This is a simple greyscale texture that contains height information per pixel. The darker the pixel, the deeper inside the surface it is.
- - **Normal Map**: A normal map is a blueish type of texture. This map looks more realistic than a height map as it contains more information than a height map. The color of each pixel defines the normal vector for this part of the surface. So light calculation could be a lot more accurate.
+ - **Normal Map**: A normal map is a bluish type of texture. This map looks more realistic than a height map as it contains more information than a height map. The color of each pixel defines the normal vector for this part of the surface. So light calculation could be a lot more accurate.
 
  To enable bump mapping, simply select a bump map texture file for a given material. Bump mapping only works in combination with a texture. When you select a bump map only, nothing will be displayed at all.
 
 ## Environment Textures
 <details>
     <summary><b>Expand this section</b> to learn more about Environment Textures</summary>
-When you have done some texturing and want to show off your work, the simplest way would be to create a screenshot inside freecad. You position your camera perfectly and take a shot.
+
+When you have done some texturing and want to show off your work, the simplest way would be to create a screenshot inside FreeCAD. You position your camera perfectly and take a shot.
 
 ![No Environment](./Resources/Documentation/textured_no_environment.png)
 
-Not that exiting. The default background migt work when building a cloud-castle ;). But for buildings on earth some natural background would be way better. Then environment config exactly does this.
+Not that exciting, right? The default background might work when building a cloud-castle ;)  
+But for buildings on earth, some natural background would be way better. The environment config exactly does this.
 
 With the right config you can enhance your screenshots a lot and get something like this:
 
@@ -145,13 +155,11 @@ With the right config you can enhance your screenshots a lot and get something l
 
 To create a new `EnvironmentConfig` you click the "Create EnvironmentConfig" command.
 
-To create a new EnvironmentConfig you click the "Create EnvironmentConfig" command.
-
 ![Create EnvironmentConfig](./Resources/Icons/CreateEnvironmentConfig.svg)
 
-This will create a new EnvironmentConfig object in the TreeView with some default settings applied. You can show and hide a EnvironmentConfig object like other objects in FreeCAD.
+**Result:** This will create a new `EnvironmentConfig` object in the TreeView with some default settings applied. You can show and hide a `EnvironmentConfig` object like other objects in FreeCAD.
 
-You might notice, that event though the object is visible, nothing is shown in the 3D view. This is because no textures are configured yet. Only when a texture is configured for a given part of the environment, this part will be displayed.
+You might notice, that event though the object is visible, nothing is shown in the 3D view. This is because no textures are configured yet. Only when a texture is configured for a given part of the environment will this part will be displayed.
 
 ![Settings](./Resources/Documentation/Environment_Config.png)
 
@@ -161,9 +169,9 @@ To understand the geometry properties a bit better take a look at this picture
 
 The green line is the geometry that displays the panorama image, as seen from top view.
 
-When ```PanoramaType``` is set to ```Thirds``` the full image will be distributed evenly across the three planes. 
+When `PanoramaType` is set to `Thirds` the full image will be distributed evenly across the three planes. 
 
-When ```PanoramaType``` is set to ```360``` you can imagine the full image to be mapped to the blue circle. And only the part that maps to the green planes is displayed. So when you rotate the environment config the visible panorama also changes. The beginning of the image is considered "North" and is always fixed to the positive Y axis.
+When `PanoramaType` is set to `360` you can imagine the full image to be mapped to the blue circle. And only the part that maps to the green planes is displayed. So when you rotate the environment config the visible panorama also changes. The beginning of the image is considered "North" and is always fixed to the positive Y axis.
 
 ### Ground Image
 This is the image that should be displayed on the ground plane. This should be a quadratic image as the ground plane is also quadratic. The size of the ground plane is calculated according to the radius and length properties.
@@ -176,8 +184,8 @@ This is the image that is displayed above the panorama image as the sky. The len
 
 ### Panorama Type
 The type of panorama image used.
- - ```Thirds```: The full image will be distributed evenly across the three planes
- - ```360```: The image will be treated as 360 degrees panorama
+ - `Thirds`: The full image will be distributed evenly across the three planes
+ - `360`: The image will be treated as 360 degrees panorama
 
 See the introduction for more details.
 
@@ -199,7 +207,7 @@ This property defines the distance, the sky plane should run down behind the pan
 The image above displays the default placement of the environment textures. The rotation can be used to rotate the whole environment around the Z axis. You can use this to orient the environment to face your camera.
 
 ### ZOffset
-This property can be used to move the environment up and down the Z-Axis. This is useful to have the ground plane displayed below your geometry.
+This property can be used to move the environment up and down the Z-Axis. This is useful to have the ground plane displayed below your geometry.  
 By default this property is set to -1mm so that it is below all geometry on the origin plane.
 
 </details>
@@ -210,12 +218,12 @@ By default this property is set to -1mm so that it is below all geometry on the 
     <b>Expand this section</b> to learn some insight on the technical part of the workbench. This is mainly some documentation for me so that I still know in a year or two what's going on in this workbench. But maybe some aspects could be interesting for others too.
     </summary>
 
-First, it is relative easy to add textures to objects in FreeCAD. Found this forum thread (https://forum.freecadweb.org/viewtopic.php?f=38&t=7216) that shows, adding a texture is only 3 lines of code. But mapping textures right on to an object involves a bit more code.
+**First**, it is relative easy to add textures to objects in FreeCAD. An example found on this [FreeCAD forum thread](https://forum.freecadweb.org/viewtopic.php?f=38&t=7216) shows adding a texture is only 3 lines of code. But... mapping textures right on to an object involves a bit more code.
 
 ### General steps to map textures
-1. Create a SoTexture2 object and set the ```filename``` to a image file
-3. Create a SoTextureCoordinate2 object and set the points array to map the vertex coordinates of the geometry
-4. Add both to the rootNode of your object and the texture should show up
+1. Create a SoTexture2 object and set the `filename` to a image file
+2. Create a SoTextureCoordinate2 object and set the points array to map the vertex coordinates of the geometry
+3. Add both to the rootNode of your object and the texture should show up
 
 ### TextureConfig
 The texture config holds all the information about materials and the textures to apply to them. When displayed the textures will be added to the objects, when hidden the textures are removed.
@@ -226,17 +234,17 @@ The texture manager does the heavy lifting. It keeps track of all textures and t
 When texturing objects the texture manager looks for arch objects with a material assigned. When the material is found in the texture config it will use the settings to texture the object.
 
 The texturing process is as follows:
-1. We get the RootNode of the object
-2. We search for the Coordinate3 node in the RootNode. This node contains a list of all vertices our object consists.
-3. We search for the SoBrepFaceSet in the RootNode. This is the object that contains the face information
-    - This object has a list of vertex indices that map to the vertices in the Coordinate3 object
+1. We get the `RootNode` of the object
+2. We search for the `Coordinate3` node in the `RootNode`. This node contains a list of all vertices our object consists.
+3. We search for the `SoBrepFaceSet` in the `RootNode`. This is the object that contains the face information
+    - This object has a list of vertex indices that map to the vertices in the `Coordinate3` object
     - It also has a list of faces. This describe the number of triangles that form a face of the object.
-    - It also contains a textureCoordinate field that works like the coordinate indices but for textures. **This should normally be the same as the coord index field or it should be empty** But FreeCAD sets it to -1. So we have to override it with the coordIndex field to get correct textures.
-4. Based on the FaceSet and the Coordinate3 object we calculate the vertices that make up each face.
-    - We group the vertex indices by triangles. Each triangle is separated by a ```-1```.
-    - Then we use the partIndex field to get the number of triangles per face and build the face list from this information
-5. When we have the faces of our object we need to calculate the texture coordinates for this face. See ```Calculating texture coordinates``` for further details.
-6. When we have all the information we need, we simply add the required nodes to the scene graph and the textures show up.
+    - It also contains a textureCoordinate field that works like the coordinate indices but for textures. **This should normally be the same as the coord index field or it should be empty** But FreeCAD sets it to -1. So we have to override it with the `coordIndex` field to get correct textures.
+4. Based on the `FaceSet` and the `Coordinate3` object we calculate the vertices that make up each face.
+    - We group the vertex indices by triangles. Each triangle is separated by a `-1`.
+    - Then we use the `partIndex` field to get the number of triangles per face and build the face list from this information
+5. When we have the faces of our object we need to calculate the texture coordinates for this face. See [Calculating texture coordinates](./FreeCAD-ArchTextures#calculating-texture-coordinates) for further details.
+6. When we have all the information we need, we simply add the required nodes to the scenegraph and the textures show up.
 
 ### Calculating texture coordinates
 This is the trickiest part in the process. The basic idea is pretty simple:
@@ -248,10 +256,10 @@ This is the trickiest part in the process. The basic idea is pretty simple:
 5. Map the image to match the bounding box
 
 #### 1. Move each face to the origin
-This is pretty straight forward. As we know the first three vertices of our face always form a triangle, we use the first one as our offset and subtract it from each vertex in the face. So the first vertex matches the origin and the others, moved by the same amount, still form our original face
+This is pretty straight forward. As we know the first three vertices of our face always form a triangle, we use the first one as our offset and subtract it from each vertex in the face. So the first vertex matches the origin and the others, moved by the same amount, still form our original face.
 
 #### 2. Rotate each faceso it maps the XZ plane
-This was pretty tricky to figure out (At least for me as I'm not a specialist in Matrix transformations and so on).
+This was pretty tricky to figure out (at least for me as I'm not a specialist in Matrix transformations and so on).
 
 The general idea behind it is:
 1. Calculate the local coordinate system for our face
@@ -285,14 +293,13 @@ Now that everything is in the positive XZ plane we can simply use the smallest X
 #### 5. Map the image to match the bounding box
 Basically the image should map our bounding box. That means the lower left corner of the image maps to the lower left corner of our bounding box (XMin, YMin, ZMin) and the upper right corner of the image maps to the upper right corner of our bounding box (XMax, YMax, ZMax).
 
-When the user sets the ```realSize``` property of the texture config, we use this informatoins to calculate a scale for the image first. Lets say the face is 2x2 meters in size. And the image has a real size of 1x1 meters. Than we have to repeat the texture 2 times in each direction to get it scaled right.
+When the user sets the `realSize` property of the texture config, we use this information to calculate a scale for the image first. Lets say the face is 2x2 meters in size. And the image has a real size of 1x1 meters. Than we have to repeat the texture 2 times in each direction to get it scaled right.
 
 After we know how big the image should be we simply calculate each vertex coordinate relative to the bounding box. Lets say we have a vertex in the middle of our image. It should map to the 0.5/0.5 coordinates of the image.
 
 </details>
 
 ## Support
-Found a bug? Have a nice feature request? simply create an issue in this repository or post to this FreeCAD Forum threads:
-
-Bugs/Help Requests: https://forum.freecadweb.org/viewtopic.php?f=3&t=38222
-New Features: https://forum.freecadweb.org/viewtopic.php?f=10&t=38223
+Found a bug? Have a nice feature request? Simply create an issue in this repository or post to these FreeCAD Forum threads:  
+1. Bugs/Help Requests: https://forum.freecadweb.org/viewtopic.php?f=3&t=38222
+2. New Features: https://forum.freecadweb.org/viewtopic.php?f=10&t=38223
