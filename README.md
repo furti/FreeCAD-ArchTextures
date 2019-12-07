@@ -7,8 +7,12 @@ I was working on a arch project in FreeCAD. When the geometry was pretty much fi
 
 ## Getting started
 
-A good advice right at the beginning: Apply textures only **after** you finished modelling your geometry. Otherwise it might be easily possible that you break your texture mapping later on and have to do it again.
-
+### Prerequisites 
+This workbench works with: 
+* FreeCAD v0.18 (Python 3 and Python 2 builds). It might also work with older versions but is not tested so far
+* FreeCAD v0.19.x (Python 3)
+ 
+### Best Practices 
 <details>
     <summary><b>Expand this section</b> to learn about how to add textures to a FreeCAD project</summary>
 This section gives you a step by step instruction on how to add textures to a FreeCAD project. It will guide you through the process of texturing a small building. We start here
