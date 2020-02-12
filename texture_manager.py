@@ -198,6 +198,11 @@ class TextureManager():
         
         if not hasattr(o, 'Material') or o.Material is None:
             return False
+        
+        material = o.Material
+
+        if not hasattr(material, 'Name') or material.Name is None:
+            return False
 
         return o.ViewObject.Visibility
 
