@@ -410,7 +410,7 @@ def findVertexCoordinates(node):
 
 def findSwitch(node):
     for child in node.getChildren():
-        if child.getTypeId().getName() == 'Switch':
+        if child.isOfType(coin.SoSwitch.getClassTypeId()):
             return child
 
 def findShadedNode(node):

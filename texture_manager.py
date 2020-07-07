@@ -142,6 +142,15 @@ class TextureManager():
                         shadedNode.insertChild(textureCoords, 1)
                         shadedNode.insertChild(bumpMap, 1)
 
+                    if hasattr(o.ViewObject, 'updateVBO'):
+                        o.ViewObject.updateVBO()
+                    else:
+                        # trick to update VBO
+                        d = getattr(o.ViewObject, 'Deviation', None)
+                        if d is not None:
+                            o.ViewObject.Deviation = d + 0.1
+                            o.ViewObject.Deviation = d
+
                     self.texturedObjects.append(
                         (o, shadedNode, (textureUnit, texture, textureCoords, bumpMap), (material, originalDiffuseColor)))
 
