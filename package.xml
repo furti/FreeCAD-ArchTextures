@@ -6,7 +6,7 @@
   <date>2019-12-07</date>
   <maintainer email="furti@someplace">Daniel Furtlehner (furti)</maintainer>
   <license file="LICENSE">LGPLv2.1</license>
-  <url type="repository" branch="main">https://github.com/chennes/FreeCAD-Package</url>
+  <url type="repository" branch="master">https://github.com/chennes/FreeCAD-Package</url>
   <url type="website">https://forum.freecadweb.org/viewtopic.php?f=10&t=38223</url>
   <url type="bugtracker">https://forum.freecadweb.org/viewtopic.php?f=3&t=38222</url>
   <icon>Resources/Icons/Workbench.svg</icon>
