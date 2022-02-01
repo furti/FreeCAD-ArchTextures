@@ -54,7 +54,7 @@ class TextureManager():
         else:
             try:
                 self.textureData = json.load(
-                    fileObject, encoding='utf-8', cls=TextureConfigDecoder)
+                    fileObject, cls=TextureConfigDecoder)
             finally:
                 fileObject.close()
 
@@ -82,7 +82,7 @@ class TextureManager():
 
     def deserializeTextureData(self, textureDataAsString):
         self.textureData = json.loads(
-            textureDataAsString, encoding='utf-8', cls=TextureConfigDecoder)
+            textureDataAsString, cls=TextureConfigDecoder)
 
     def textureObjects(self, debug=False):
         # Make sure that no old textures are left. Otherwise we could end up with duplicate textures
