@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<package format="1" xmlns="https://wiki.freecad.org/Package_Metadata">
+  <name>Arch Textures</name>
+  <description>This workbench allows you to add textures to architectural objects directly in FreeCAD. No need for third party software, as long as you don't want to produce photorealistic renderings.</description>
+  <version>0.3</version>
+  <date>2019-12-07</date>
+  <maintainer email="furti@someplace">Daniel Furtlehner (furti)</maintainer>
+  <license file="LICENSE">LGPLv2.1</license>
+  <url type="repository" branch="master">https://github.com/chennes/FreeCAD-Package</url>
+  <url type="website">https://forum.freecadweb.org/viewtopic.php?f=10&t=38223</url>
+  <url type="bugtracker">https://forum.freecadweb.org/viewtopic.php?f=3&t=38222</url>
+  <icon>Resources/Icons/Workbench.svg</icon>
+
+  <content>
+    <workbench>
+      <classname>Arch Textures</classname>
+      <subdirectory>./</subdirectory>
+    </workbench>
+  </content>
+
+</package>
