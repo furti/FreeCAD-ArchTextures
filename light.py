@@ -5,6 +5,10 @@ from pivy import coin
 import arch_texture_utils.faceset_utils as faceset_utils
 
 class Light():
+
+    DEFAULT_INTENSITY = 0.6 # Must not exceed 1.0
+    MAX_POWER_FOR_COIN = 100.0
+
     def __init__(self, obj):
         obj.Proxy = self
 
@@ -16,12 +20,18 @@ class Light():
         if not 'Color' in pl:
             obj.addProperty("App::PropertyColor", "Color", "Light", 
                             "The color of the light").Color = (1.0, 0.94, 0.91)
-        
+
+        # Power is the master parameter to set light power for user
+        # Intensity is a value internally required for Coin: it is bound to Power,
+        # hidden to user, and bounded to [0,1]
         if not 'Intensity' in pl:
-            obj.addProperty("App::PropertyFloatConstraint", "Intensity", "Light", 
-                            "The intensity of the light").Intensity = (1.0, 0.0, 1.0, 0.1)
+            obj.addProperty("App::PropertyFloatConstraint", "Intensity", "Light",
+                            "The intensity of the light - bound to Power").Intensity = (Light.DEFAULT_INTENSITY, 0.0, 100.0 , 0.1)
+        obj.setEditorMode('Intensity',3)
 
-
+        if not 'Power' in pl:
+            obj.addProperty("App::PropertyFloat", "Power", "Light", "The power of the light ")
+            obj.Power = obj.Intensity * Light.MAX_POWER_FOR_COIN # Backward compatibility
 
     def onDocumentRestored(self, obj):
         self.setProperties(obj)
@@ -54,13 +64,14 @@ class ViewProviderLight:
         self.transform = coin.SoTransform()
         self.material = coin.SoMaterial()
         self.coinLight = self.createLightInstance()
-        actualGeometry = self.createGeometry()
+        self.actualGeometry = self.createGeometry()
+        self.material.transparency.setValue(0.5)
 
         self.geometryNode.addChild(self.transform)
         self.geometryNode.addChild(self.material)
 
-        if actualGeometry is not None:
-            self.geometryNode.addChild(actualGeometry)
+        if self.actualGeometry is not None:
+            self.geometryNode.addChild(self.actualGeometry)
         
         sceneGraph.insertChild(self.coinLight, 1)
 
@@ -106,6 +117,8 @@ class ViewProviderLight:
             self.updateIntensity()
         elif prop == 'Location':
             self.updateLocation()
+        elif prop == 'Power':
+            self.updatePower()
  
     def onChanged(self, vp, prop):
         if prop == 'Visibility':
@@ -173,6 +186,18 @@ class ViewProviderLight:
     def updateIntensity(self):
         self.coinLight.intensity.setValue(self.Object.Intensity)
     
+    def updatePower(self):
+        # Propagate to Intensity, ensuring Intensity is always in [0,1]
+
+        intens = self.Object.Power / Light.MAX_POWER_FOR_COIN
+
+        if intens >= 0 and intens <= 1:
+            self.Object.Intensity = intens
+        elif intens > 1:
+            self.Object.Intensity = 1
+        elif intens < 0:
+            self.Object.Intensity = 0
+
     def updateGeometryLocation(self, coinVector):
         self.transform.translation.setValue(coinVector)
     
